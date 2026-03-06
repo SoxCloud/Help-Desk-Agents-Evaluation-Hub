@@ -360,7 +360,7 @@ export const AgentDashboard: React.FC<Props> = ({
             {onBack && (
               <button
                 onClick={onBack}
-                aria-label="Back"
+                title="Go back"
                 className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white hover:bg-white/20 hover:scale-110 transition-all duration-300"
               >
                 <ChevronLeft size={20} />
@@ -388,8 +388,8 @@ export const AgentDashboard: React.FC<Props> = ({
             {/* Export button */}
             <button
               onClick={exportData}
+              title="Export data"
               className="p-2 bg-white/10 backdrop-blur-md rounded-xl hover:bg-white/20 transition-all border border-white/20"
-              title="Export Data"
             >
               <Download size={16} className="text-white" />
             </button>
@@ -432,6 +432,7 @@ export const AgentDashboard: React.FC<Props> = ({
               <div className="flex bg-white/10 backdrop-blur-md p-1 rounded-2xl border border-white/20">
                 <button
                   onClick={() => onToggleView("stats")}
+                  title="Switch to stats view"
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                     viewMode === "stats" 
                       ? "bg-white text-indigo-700 shadow-lg" 
@@ -442,6 +443,7 @@ export const AgentDashboard: React.FC<Props> = ({
                 </button>
                 <button
                   onClick={() => onToggleView("evaluations")}
+                  title="Switch to calls view"
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                     viewMode === "evaluations" 
                       ? "bg-white text-indigo-700 shadow-lg" 
@@ -591,6 +593,7 @@ export const AgentDashboard: React.FC<Props> = ({
                       <button
                         key={i}
                         onClick={() => setTipIndex(i)}
+                        title={`Tip ${i + 1}`}
                         className={`h-1 rounded-full transition-all ${
                           i === tipIndex ? 'w-4 bg-indigo-400' : 'w-2 bg-slate-600'
                         }`}
@@ -603,19 +606,31 @@ export const AgentDashboard: React.FC<Props> = ({
 
             {/* Quick Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <button className="bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group">
+              <button 
+                title="Export report"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group"
+              >
                 <Download size={20} className="group-hover:scale-110 transition" />
                 <span className="text-[10px] font-bold">Export Report</span>
               </button>
-              <button className="bg-emerald-600 hover:bg-emerald-500 text-white p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group">
+              <button 
+                title="Share progress"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group"
+              >
                 <Share2 size={20} className="group-hover:scale-110 transition" />
                 <span className="text-[10px] font-bold">Share Progress</span>
               </button>
-              <button className="bg-purple-600 hover:bg-purple-500 text-white p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group">
+              <button 
+                title="Save goal"
+                className="bg-purple-600 hover:bg-purple-500 text-white p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group"
+              >
                 <Bookmark size={20} className="group-hover:scale-110 transition" />
                 <span className="text-[10px] font-bold">Save Goal</span>
               </button>
-              <button className="bg-amber-600 hover:bg-amber-500 text-white p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group">
+              <button 
+                title="Set alert"
+                className="bg-amber-600 hover:bg-amber-500 text-white p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group"
+              >
                 <Bell size={20} className="group-hover:scale-110 transition" />
                 <span className="text-[10px] font-bold">Set Alert</span>
               </button>
@@ -751,8 +766,8 @@ export const AgentDashboard: React.FC<Props> = ({
                 {latestEval && !coachLoading && (
                   <button
                     onClick={handleRefreshCoach}
+                    title="Refresh insights"
                     className="p-2 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
-                    title="Refresh coaching insights"
                   >
                     <RefreshCw size={16} className="text-indigo-300" />
                   </button>
@@ -786,7 +801,10 @@ export const AgentDashboard: React.FC<Props> = ({
                 )}
               </div>
               
-              <button className="w-full mt-6 py-3 bg-white text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 transition-colors">
+              <button 
+                className="w-full mt-6 py-3 bg-white text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 transition-colors"
+                title="View detailed analysis"
+              >
                 Deep Dive Insights →
               </button>
             </div>
@@ -799,14 +817,15 @@ export const AgentDashboard: React.FC<Props> = ({
               </h4>
               <div className="flex gap-2 justify-between">
                 {[
-                  { mood: 'great', emoji: '🚀', label: 'Great' },
-                  { mood: 'good', emoji: '😊', label: 'Good' },
-                  { mood: 'okay', emoji: '😐', label: 'Okay' },
-                  { mood: 'tired', emoji: '😴', label: 'Tired' },
+                  { mood: 'great', emoji: '🚀', label: 'Great', title: 'Feeling great' },
+                  { mood: 'good', emoji: '😊', label: 'Good', title: 'Feeling good' },
+                  { mood: 'okay', emoji: '😐', label: 'Okay', title: 'Feeling okay' },
+                  { mood: 'tired', emoji: '😴', label: 'Tired', title: 'Feeling tired' },
                 ].map((item) => (
                   <button
                     key={item.mood}
                     onClick={() => setMood(item.mood as any)}
+                    title={item.title}
                     className={`flex-1 p-3 rounded-xl text-center transition-all ${
                       mood === item.mood
                         ? 'bg-indigo-600 text-white scale-105'
@@ -832,7 +851,12 @@ export const AgentDashboard: React.FC<Props> = ({
                   <Target size={18} className="text-indigo-400" />
                   Weekly Goals
                 </h4>
-                <button className="text-[10px] text-indigo-400 hover:text-indigo-300">Edit Goals</button>
+                <button 
+                  className="text-[10px] text-indigo-400 hover:text-indigo-300"
+                  title="Edit your goals"
+                >
+                  Edit Goals
+                </button>
               </div>
               <div className="space-y-4">
                 {goals.map((goal) => {
