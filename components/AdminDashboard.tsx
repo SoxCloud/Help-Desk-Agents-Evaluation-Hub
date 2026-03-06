@@ -82,6 +82,7 @@ export const AdminDashboard: React.FC<Props> = ({
     totalEvaluatedCalls > 0
       ? (totalTeamScore / totalEvaluatedCalls).toFixed(1)
       : "0";
+      
   // Average handle time across all agents in range
   const totalAhtSeconds = agentsWithFilteredHistory.reduce((sum, a) => {
     return (
@@ -167,13 +168,18 @@ export const AdminDashboard: React.FC<Props> = ({
   const avgCheeseUpsell =
     totalDays > 0 ? (totalCheesePct / totalDays).toFixed(1) : "0";
 
+  // CHART DATA - Ticket Performance
   const chartData = agentsWithFilteredHistory.map((a) => ({
     name: a.name.split(" ")[0],
-    calls: a.history.reduce(
-      (inner, h) => inner + (h.answeredCalls || 0),
-      0,
-    ),
-  }));
+    fullName: a.name,
+    total: a.history.reduce((inner, h) => inner + (h.totalTickets || 0), 0),
+    solved: a.history.reduce((inner, h) => inner + (h.solvedTickets || 0), 0),
+    rate: (() => {
+      const total = a.history.reduce((inner, h) => inner + (h.totalTickets || 0), 0);
+      const solved = a.history.reduce((inner, h) => inner + (h.solvedTickets || 0), 0);
+      return total > 0 ? Math.round((solved / total) * 100) : 0;
+    })(),
+  })).sort((a, b) => b.total - a.total);
 
   const activeAgents = agentsWithFilteredHistory.filter((a) => a.history.length > 0).length;
 
@@ -290,50 +296,118 @@ export const AdminDashboard: React.FC<Props> = ({
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Call Volume Chart */}
+        {/* Ticket Performance Chart */}
         <div className="lg:col-span-2 bg-[#1e293b]/50 border border-slate-800 p-6 rounded-2xl">
-          <h3 className="text-white font-semibold mb-6 flex items-center gap-2">
-            <Activity className="text-indigo-400" size={18} /> Call Volume per
-            Agent
-          </h3>
-          <div className="h-64">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-white font-semibold flex items-center gap-2">
+              <Activity className="text-indigo-400" size={18} /> Ticket Performance per Agent
+            </h3>
+            <div className="flex items-center gap-3 text-[10px]">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                <span className="text-slate-400">Total</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                <span className="text-slate-400">Solved</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#334155"
-                  vertical={false}
+              <BarChart 
+                data={chartData} 
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                barGap={4}
+                barCategoryGap={16}
+              >
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  stroke="#334155" 
+                  vertical={false} 
                 />
-                <XAxis
-                  dataKey="name"
-                  stroke="#64748b"
-                  fontSize={10}
-                  axisLine={false}
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#64748b" 
+                  fontSize={10} 
+                  axisLine={false} 
                   tickLine={false}
+                  tick={{ fill: '#94a3b8' }}
                 />
-                <YAxis
-                  stroke="#64748b"
-                  fontSize={10}
-                  axisLine={false}
+                <YAxis 
+                  stroke="#64748b" 
+                  fontSize={10} 
+                  axisLine={false} 
                   tickLine={false}
-                />
-                <Tooltip
-                  cursor={{ fill: "#2d3748" }}
-                  contentStyle={{
-                    backgroundColor: "#1e293b",
-                    border: "1px solid #334155",
-                    borderRadius: "8px",
-                    color: "#fff",
+                  tick={{ fill: '#94a3b8' }}
+                  label={{ 
+                    value: 'Number of Tickets', 
+                    angle: -90, 
+                    position: 'insideLeft',
+                    style: { fill: '#64748b', fontSize: '10px', fontWeight: 'bold' }
                   }}
                 />
-                <Bar
-                  dataKey="calls"
-                  fill="#6366f1"
-                  radius={[4, 4, 0, 0]}
-                  barSize={25}
+                <Tooltip 
+                  cursor={{ fill: '#1e293b' }}
+                  contentStyle={{ 
+                    backgroundColor: '#1e293b', 
+                    border: '1px solid #334155', 
+                    borderRadius: '12px',
+                    color: '#fff',
+                    fontSize: '12px',
+                    padding: '12px',
+                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)'
+                  }}
+                  labelStyle={{ color: '#94a3b8', fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}
+                  formatter={(value: number, name: string) => {
+                    if (name === 'total') return [`${value} tickets`, 'Total Tickets'];
+                    if (name === 'solved') return [`${value} tickets`, 'Solved Tickets'];
+                    return [value, name];
+                  }}
+                />
+                <Bar 
+                  dataKey="total" 
+                  fill="#6366f1" 
+                  radius={[4, 4, 0, 0]} 
+                  barSize={20}
+                  name="total"
+                />
+                <Bar 
+                  dataKey="solved" 
+                  fill="#10b981" 
+                  radius={[4, 4, 0, 0]} 
+                  barSize={20}
+                  name="solved"
                 />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+
+          {/* Summary Stats */}
+          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-slate-800">
+            <div className="text-center">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Tickets</p>
+              <p className="text-lg font-black text-white">
+                {chartData.reduce((sum, item) => sum + (item.total || 0), 0)}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Solved</p>
+              <p className="text-lg font-black text-emerald-400">
+                {chartData.reduce((sum, item) => sum + (item.solved || 0), 0)}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Resolution Rate</p>
+              <p className="text-lg font-black text-indigo-400">
+                {(() => {
+                  const total = chartData.reduce((sum, item) => sum + (item.total || 0), 0);
+                  const solved = chartData.reduce((sum, item) => sum + (item.solved || 0), 0);
+                  return total > 0 ? `${Math.round((solved / total) * 100)}%` : '0%';
+                })()}
+              </p>
+            </div>
           </div>
         </div>
 
