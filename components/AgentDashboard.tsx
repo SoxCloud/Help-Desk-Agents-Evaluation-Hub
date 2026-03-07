@@ -534,6 +534,24 @@ export const AgentDashboard: React.FC<Props> = ({
                 icon={<Activity />}
                 color="from-indigo-500 to-blue-500"
               />
+              {/* Inside the PremiumStatCard grid, add this after the Interactions card */}
+<PremiumStatCard
+  title="Avg Interactions/Ticket"
+  value={(() => {
+    if (totalTickets === 0) return "0";
+    return (interactions / totalTickets).toFixed(1);
+  })()}
+  sub="per ticket"
+  icon={<Activity />}
+  color="from-cyan-500 to-teal-500"
+/>
+              <PremiumStatCard
+                title="Avg KPI Score"
+                value={`${averageKpiScore}%`}
+                sub="overall performance"
+                icon={<Award />}
+                color="from-purple-500 to-pink-500"
+              />
               <PremiumStatCard
                 title="Cheese Upsell"
                 value={
