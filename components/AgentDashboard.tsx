@@ -159,14 +159,23 @@ export const AgentDashboard: React.FC<Props> = ({
         }, 0) / agent.evaluations.length
       )
     : 0;
-    // Calculate average resolution time in minutes
-const avgResolutionTimeMinutes = filteredHistory.length > 0
-  ? (filteredHistory.reduce((sum, h) => {
-      const secs = h.avgResolutionSeconds ?? 
-                  (parseInt(h.avgResolutionTime || "0", 10) || 0);
-      return sum + secs;
-    }, 0) / filteredHistory.length / 60).toFixed(1)
-  : "0";
+
+  // Calculate average resolution time in minutes
+  const avgResolutionTimeMinutes = filteredHistory.length > 0
+    ? (filteredHistory.reduce((sum, h) => {
+        const secs = h.avgResolutionSeconds ?? 
+                    (parseInt(h.avgResolutionTime || "0", 10) || 0);
+        return sum + secs;
+      }, 0) / filteredHistory.length / 60).toFixed(1)
+    : "0";
+
+  // Calculate average handle time in minutes
+  const avgHandleTimeMinutes = filteredHistory.length > 0
+    ? (filteredHistory.reduce((sum, h) => {
+        const secs = h.ahtSeconds ?? (parseInt(h.aht || "0", 10) || 0);
+        return sum + secs;
+      }, 0) / filteredHistory.length / 60).toFixed(1)
+    : "0";
 
   // Update goals with current values
   useEffect(() => {
@@ -494,7 +503,7 @@ const avgResolutionTimeMinutes = filteredHistory.length > 0
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main Content Area */}
           <div className="lg:col-span-8 space-y-6">
-            {/* STAT CARDS GRID - UPDATED with Avg KPI Score */}
+            {/* STAT CARDS GRID - UPDATED with Handle Time in minutes */}
             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
               <PremiumStatCard
                 title="Calls Handled"
@@ -511,13 +520,13 @@ const avgResolutionTimeMinutes = filteredHistory.length > 0
                 icon={<LayoutGrid />}
                 color="from-violet-500 to-purple-500"
               />
-               <PremiumStatCard
-    title="Resolution Time"
-    value={`${avgResolutionTimeMinutes}m`}
-    sub="avg per ticket"
-    icon={<Clock />}
-    color="from-sky-500 to-cyan-500"
-  />
+              <PremiumStatCard
+                title="Resolution Time"
+                value={`${avgResolutionTimeMinutes}m`}
+                sub="avg per ticket"
+                icon={<Clock />}
+                color="from-sky-500 to-cyan-500"
+              />
               <PremiumStatCard
                 title="QA Score"
                 value={`${currentScore}%`}
@@ -525,18 +534,10 @@ const avgResolutionTimeMinutes = filteredHistory.length > 0
                 icon={<Target />}
                 color="from-emerald-500 to-teal-500"
               />
+              {/* UPDATED: Handle Time in minutes */}
               <PremiumStatCard
                 title="Handle Time"
-                value={
-                  filteredHistory.length
-                    ? `${Math.round(
-                        filteredHistory.reduce((sum, h) => {
-                          const secs = h.ahtSeconds ?? (parseInt(h.aht || "0", 10) || 0);
-                          return sum + secs;
-                        }, 0) / filteredHistory.length,
-                      )}s`
-                    : "0s"
-                }
+                value={`${avgHandleTimeMinutes}m`}
                 sub="avg AHT"
                 icon={<Clock />}
                 color="from-orange-500 to-amber-500"
@@ -562,17 +563,13 @@ const avgResolutionTimeMinutes = filteredHistory.length > 0
                 icon={<Activity />}
                 color="from-indigo-500 to-blue-500"
               />
-              {/* Inside the PremiumStatCard grid, add this after the Interactions card */}
-<PremiumStatCard
-  title="Avg Interactions/Ticket"
-  value={(() => {
-    if (totalTickets === 0) return "0";
-    return (interactions / totalTickets).toFixed(1);
-  })()}
-  sub="per ticket"
-  icon={<Activity />}
-  color="from-cyan-500 to-teal-500"
-/>
+              <PremiumStatCard
+                title="Avg Interactions/Ticket"
+                value={totalTickets > 0 ? (interactions / totalTickets).toFixed(1) : "0"}
+                sub="per ticket"
+                icon={<Activity />}
+                color="from-cyan-500 to-teal-500"
+              />
               <PremiumStatCard
                 title="Avg KPI Score"
                 value={`${averageKpiScore}%`}
@@ -777,7 +774,7 @@ const avgResolutionTimeMinutes = filteredHistory.length > 0
               </div>
             </div>
 
-            {/* KPI Breakdown Section - NEW */}
+            {/* KPI Breakdown Section */}
             <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-indigo-500/30">
               <div className="flex items-center justify-between mb-6">
                 <h4 className="text-white font-bold flex items-center gap-2">

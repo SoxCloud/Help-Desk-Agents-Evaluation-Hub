@@ -157,9 +157,8 @@ export const AdminDashboard: React.FC<Props> = ({
 
   const avgResolutionTime =
     avgResSamples > 0
-      ? `${Math.round(totalAvgResSeconds / avgResSamples/60).toFixed(1)}m`
+      ? `${Math.round(totalAvgResSeconds / avgResSamples/60).toFixed(1)}'`
       : "0m";
-
   // Team cheese upsell % (average across all days in range)
   const totalDays = agentsWithFilteredHistory.reduce(
     (s, a) => s + a.history.length,
