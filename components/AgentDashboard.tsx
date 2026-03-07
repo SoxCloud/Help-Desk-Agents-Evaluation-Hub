@@ -159,6 +159,14 @@ export const AgentDashboard: React.FC<Props> = ({
         }, 0) / agent.evaluations.length
       )
     : 0;
+    // Calculate average resolution time in minutes
+const avgResolutionTimeMinutes = filteredHistory.length > 0
+  ? (filteredHistory.reduce((sum, h) => {
+      const secs = h.avgResolutionSeconds ?? 
+                  (parseInt(h.avgResolutionTime || "0", 10) || 0);
+      return sum + secs;
+    }, 0) / filteredHistory.length / 60).toFixed(1)
+  : "0";
 
   // Update goals with current values
   useEffect(() => {
@@ -503,6 +511,13 @@ export const AgentDashboard: React.FC<Props> = ({
                 icon={<LayoutGrid />}
                 color="from-violet-500 to-purple-500"
               />
+               <PremiumStatCard
+    title="Resolution Time"
+    value={`${avgResolutionTimeMinutes}m`}
+    sub="avg per ticket"
+    icon={<Clock />}
+    color="from-sky-500 to-cyan-500"
+  />
               <PremiumStatCard
                 title="QA Score"
                 value={`${currentScore}%`}

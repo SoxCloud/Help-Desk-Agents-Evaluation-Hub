@@ -105,10 +105,10 @@ export const AdminDashboard: React.FC<Props> = ({
     0,
   );
 
-  const avgHandleTime =
+  const avgHandleTimeMinutes =
     totalAhtSamples > 0
-      ? `${Math.round(totalAhtSeconds / totalAhtSamples)}s`
-      : "0s";
+      ? `${Math.round(totalAhtSeconds / totalAhtSamples/60).toFixed(1)}m`
+      : "0m";
 
   const totalTickets = agentsWithFilteredHistory.reduce(
     (sum, a) =>
@@ -157,8 +157,8 @@ export const AdminDashboard: React.FC<Props> = ({
 
   const avgResolutionTime =
     avgResSamples > 0
-      ? `${Math.round(totalAvgResSeconds / avgResSamples)}s`
-      : "0s";
+      ? `${Math.round(totalAvgResSeconds / avgResSamples/60).toFixed(1)}m`
+      : "0m";
 
   // Team cheese upsell % (average across all days in range)
   const totalDays = agentsWithFilteredHistory.reduce(
@@ -297,13 +297,13 @@ export const AdminDashboard: React.FC<Props> = ({
         />
         <MetricCard
           title="Avg Handle Time"
-          value={avgHandleTime}
+          value={`${avgHandleTimeMinutes}m`}
           change="Team avg"
           icon={<Clock className="text-orange-400" />}
         />
         <MetricCard
           title="Avg Resolution Time"
-          value={avgResolutionTime}
+         value={avgResolutionTime}
           change="Team avg"
           icon={<Clock className="text-sky-400" />}
         />

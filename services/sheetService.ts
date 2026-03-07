@@ -146,6 +146,7 @@ export const fetchAllDashboardData = async () => {
     const durationSeconds = parseTimeToSeconds((row[idxDuration] ?? "").trim());
 
     agent.evaluations.push({
+      id: `eval-${Date.now()}-${Math.random()}`,
       date: normalizeDate((row[idxEvalDate] ?? "").trim()),
       evaluator: (row[idxEvaluator] ?? "").trim(),
       called: (row[idxCalled] ?? "").trim() || undefined,
