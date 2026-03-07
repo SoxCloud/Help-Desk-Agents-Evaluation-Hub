@@ -35,6 +35,7 @@ import {
   ThumbsUp,
   AlertCircle,
   Ticket,
+  BarChart4,
 } from "lucide-react";
 
 interface Props {
@@ -146,6 +147,18 @@ export const AgentDashboard: React.FC<Props> = ({
     totalTickets > 0 ? Math.round((solvedTickets / totalTickets) * 100) : 0;
   const weightedEscalationRate =
     totalTickets > 0 ? Math.round((escalatedTickets / totalTickets) * 100) : 0;
+
+  // Calculate average KPI score
+  const averageKpiScore = agent.evaluations.length > 0
+    ? Math.round(
+        agent.evaluations.reduce((sum, e) => {
+          const kpiSum = (e.kpis.product || 0) + (e.kpis.etiquette || 0) + 
+                        (e.kpis.solving || 0) + (e.kpis.upsell || 0) + 
+                        (e.kpis.promo || 0) + (e.kpis.capture || 0);
+          return sum + (kpiSum / 6);
+        }, 0) / agent.evaluations.length
+      )
+    : 0;
 
   // Update goals with current values
   useEffect(() => {
@@ -473,7 +486,7 @@ export const AgentDashboard: React.FC<Props> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main Content Area */}
           <div className="lg:col-span-8 space-y-6">
-            {/* STAT CARDS GRID */}
+            {/* STAT CARDS GRID - UPDATED with Avg KPI Score */}
             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
               <PremiumStatCard
                 title="Calls Handled"
@@ -702,7 +715,7 @@ export const AgentDashboard: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Competency Section - UPDATED to show all 6 KPIs */}
+            {/* Competency Section */}
             <div className="bg-[#1e293b]/40 border border-slate-800 p-8 rounded-[2rem] relative overflow-hidden">
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-3">
@@ -749,6 +762,52 @@ export const AgentDashboard: React.FC<Props> = ({
               </div>
             </div>
 
+            {/* KPI Breakdown Section - NEW */}
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-indigo-500/30">
+              <div className="flex items-center justify-between mb-6">
+                <h4 className="text-white font-bold flex items-center gap-2">
+                  <BarChart4 size={18} className="text-indigo-400" />
+                  Your KPI Performance
+                </h4>
+                <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded-full">
+                  Based on {agent.evaluations.length} evaluations
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <MiniKPICard
+                  label="Product"
+                  value={kpis.product || 0}
+                  color="from-blue-500 to-blue-600"
+                />
+                <MiniKPICard
+                  label="Etiquette"
+                  value={kpis.etiquette || 0}
+                  color="from-indigo-500 to-indigo-600"
+                />
+                <MiniKPICard
+                  label="Problem"
+                  value={kpis.solving || 0}
+                  color="from-purple-500 to-purple-600"
+                />
+                <MiniKPICard
+                  label="Upsell"
+                  value={kpis.upsell || 0}
+                  color="from-emerald-500 to-emerald-600"
+                />
+                <MiniKPICard
+                  label="Promo"
+                  value={kpis.promo || 0}
+                  color="from-amber-500 to-amber-600"
+                />
+                <MiniKPICard
+                  label="Capture"
+                  value={kpis.capture || 0}
+                  color="from-rose-500 to-rose-600"
+                />
+              </div>
+            </div>
+
             {/* Recent Activity Feed */}
             <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
               <h4 className="text-white font-bold flex items-center gap-2 mb-4">
@@ -784,7 +843,7 @@ export const AgentDashboard: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Right Sidebar - unchanged */}
+          {/* Right Sidebar */}
           <div className="lg:col-span-4 space-y-6">
             {/* AI Coach Card */}
             <div className="bg-gradient-to-br from-indigo-600 to-indigo-900 border border-indigo-500/30 p-8 rounded-[2rem] shadow-2xl">
@@ -980,7 +1039,7 @@ export const AgentDashboard: React.FC<Props> = ({
           </div>
         </div>
       ) : (
-        /* EVALUATIONS VIEW - UPDATED with all 6 KPIs */
+        /* EVALUATIONS VIEW */
         <div className="grid grid-cols-1 gap-6 animate-in slide-in-from-bottom-6 duration-500">
           {(filteredEvaluations.length ? filteredEvaluations : agent.evaluations).map((evalItem, idx) => {
             const phoneNumber = evalItem.id ? formatPhoneNumber(evalItem.id) : `#${1000 + idx}`;
@@ -1150,6 +1209,21 @@ const ThickKPI = ({
     <div className="h-4 bg-slate-950 rounded-full border border-slate-800/80 overflow-hidden p-[3px] shadow-inner">
       <div
         className={`h-full rounded-full transition-all duration-1000 ${color} shadow-[0_0_15px_rgba(99,102,241,0.2)]`}
+        style={{ width: `${value}%` }}
+      ></div>
+    </div>
+  </div>
+);
+
+const MiniKPICard = ({ label, value, color }: { label: string; value: number; color: string }) => (
+  <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700 hover:border-indigo-500/50 transition-all group">
+    <div className="flex items-center justify-between mb-2">
+      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
+      <span className="text-sm font-black text-white">{value}%</span>
+    </div>
+    <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+      <div 
+        className={`h-full rounded-full bg-gradient-to-r ${color}`}
         style={{ width: `${value}%` }}
       ></div>
     </div>

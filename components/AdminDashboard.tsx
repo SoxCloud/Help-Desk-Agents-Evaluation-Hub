@@ -8,6 +8,12 @@ import {
   Activity,
   Search,
   Calendar,
+  Award,
+  Target,
+  TrendingUp,
+  Brain,
+  Star,
+  BarChart4,
 } from "lucide-react";
 import {
   BarChart,
@@ -168,6 +174,17 @@ export const AdminDashboard: React.FC<Props> = ({
   const avgCheeseUpsell =
     totalDays > 0 ? (totalCheesePct / totalDays).toFixed(1) : "0";
 
+  // NEW: Calculate average interactions per ticket for the team
+  const totalTicketsForInteractions = agentsWithFilteredHistory.reduce(
+    (sum, a) =>
+      sum + a.history.reduce((inner, h) => inner + (h.totalTickets || 0), 0),
+    0,
+  );
+
+  const avgInteractionsPerTicket = totalTicketsForInteractions > 0
+    ? (totalInteractions / totalTicketsForInteractions).toFixed(1)
+    : "0";
+
   // CHART DATA - Ticket Performance
   const chartData = agentsWithFilteredHistory.map((a) => ({
     name: a.name.split(" ")[0],
@@ -181,11 +198,44 @@ export const AdminDashboard: React.FC<Props> = ({
     })(),
   })).sort((a, b) => b.total - a.total);
 
+  // OVERALL KPI SCORES - Calculate average of each KPI across all agents
+  const kpiAverages = useMemo(() => {
+    let totalProduct = 0;
+    let totalEtiquette = 0;
+    let totalSolving = 0;
+    let totalUpsell = 0;
+    let totalPromo = 0;
+    let totalCapture = 0;
+    let evalCount = 0;
+
+    agentsWithFilteredHistory.forEach(agent => {
+      agent.evaluations.forEach(evalItem => {
+        totalProduct += evalItem.kpis.product || 0;
+        totalEtiquette += evalItem.kpis.etiquette || 0;
+        totalSolving += evalItem.kpis.solving || 0;
+        totalUpsell += evalItem.kpis.upsell || 0;
+        totalPromo += evalItem.kpis.promo || 0;
+        totalCapture += evalItem.kpis.capture || 0;
+        evalCount++;
+      });
+    });
+
+    return {
+      product: evalCount > 0 ? Math.round(totalProduct / evalCount) : 0,
+      etiquette: evalCount > 0 ? Math.round(totalEtiquette / evalCount) : 0,
+      solving: evalCount > 0 ? Math.round(totalSolving / evalCount) : 0,
+      upsell: evalCount > 0 ? Math.round(totalUpsell / evalCount) : 0,
+      promo: evalCount > 0 ? Math.round(totalPromo / evalCount) : 0,
+      capture: evalCount > 0 ? Math.round(totalCapture / evalCount) : 0,
+      totalEvals: evalCount,
+    };
+  }, [agentsWithFilteredHistory]);
+
   const activeAgents = agentsWithFilteredHistory.filter((a) => a.history.length > 0).length;
 
   return (
     <div className="space-y-6">
-      {/* Header Area with Restored Date Range */}
+      {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
@@ -206,7 +256,7 @@ export const AdminDashboard: React.FC<Props> = ({
                 onChange={(e) =>
                   onDateChange({ ...dateRange, start: e.target.value })
                 }
-                className="bg-transparent outline-none border-none focus:ring-0 w-28"
+                className="bg-transparent outline-none border-none focus:ring-0 w-28 text-white"
               />
               <span className="text-slate-600">-</span>
               <input
@@ -215,7 +265,7 @@ export const AdminDashboard: React.FC<Props> = ({
                 onChange={(e) =>
                   onDateChange({ ...dateRange, end: e.target.value })
                 }
-                className="bg-transparent outline-none border-none focus:ring-0 w-28"
+                className="bg-transparent outline-none border-none focus:ring-0 w-28 text-white"
               />
             </div>
           </div>
@@ -225,7 +275,7 @@ export const AdminDashboard: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Stats Grid - Now using Dynamic Data */}
+      {/* Stats Grid - UPDATED with Avg Interactions/Ticket */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <MetricCard
           title="Total Calls"
@@ -281,10 +331,16 @@ export const AdminDashboard: React.FC<Props> = ({
           icon={<Activity className="text-rose-400" />}
         />
         <MetricCard
-          title="Interactions"
+          title="Total Interactions"
           value={totalInteractions}
-          change="In range"
+          change="All channels"
           icon={<Activity className="text-indigo-400" />}
+        />
+        <MetricCard
+          title="Avg Interactions/Ticket"
+          value={avgInteractionsPerTicket}
+          change="Team avg"
+          icon={<Activity className="text-cyan-400" />}
         />
         <MetricCard
           title="Cheese upsell %"
@@ -297,7 +353,7 @@ export const AdminDashboard: React.FC<Props> = ({
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Ticket Performance Chart */}
-        <div className="lg:col-span-2 bg-[#1e293b]/50 border border-slate-800 p-6 rounded-2xl">
+        <div className="lg:col-span-2 bg-[#1e293b] border border-slate-800 p-6 rounded-2xl">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-white font-semibold flex items-center gap-2">
               <Activity className="text-indigo-400" size={18} /> Ticket Performance per Agent
@@ -329,14 +385,14 @@ export const AdminDashboard: React.FC<Props> = ({
                 />
                 <XAxis 
                   dataKey="name" 
-                  stroke="#64748b" 
+                  stroke="#94a3b8" 
                   fontSize={10} 
                   axisLine={false} 
                   tickLine={false}
                   tick={{ fill: '#94a3b8' }}
                 />
                 <YAxis 
-                  stroke="#64748b" 
+                  stroke="#94a3b8" 
                   fontSize={10} 
                   axisLine={false} 
                   tickLine={false}
@@ -345,7 +401,7 @@ export const AdminDashboard: React.FC<Props> = ({
                     value: 'Number of Tickets', 
                     angle: -90, 
                     position: 'insideLeft',
-                    style: { fill: '#64748b', fontSize: '10px', fontWeight: 'bold' }
+                    style: { fill: '#94a3b8', fontSize: '10px', fontWeight: 'bold' }
                   }}
                 />
                 <Tooltip 
@@ -357,7 +413,6 @@ export const AdminDashboard: React.FC<Props> = ({
                     color: '#fff',
                     fontSize: '12px',
                     padding: '12px',
-                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)'
                   }}
                   labelStyle={{ color: '#94a3b8', fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}
                   formatter={(value: number, name: string) => {
@@ -412,7 +467,7 @@ export const AdminDashboard: React.FC<Props> = ({
         </div>
 
         {/* Current Status Donut Area */}
-        <div className="bg-[#1e293b]/50 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center text-center">
+        <div className="bg-[#1e293b] border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center text-center">
           <h3 className="text-white font-semibold mb-4 w-full text-left">
             Current Status
           </h3>
@@ -439,8 +494,99 @@ export const AdminDashboard: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Agent Performance Table */}
-      <div className="bg-[#1e293b]/50 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      {/* Overall Team KPI Scores Section */}
+      <div className="bg-[#1e293b] border border-slate-800 rounded-2xl p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-indigo-600/20 rounded-xl">
+            <Award className="text-indigo-400" size={20} />
+          </div>
+          <h3 className="text-white font-bold text-lg">Team Performance Metrics</h3>
+          <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded-full">
+            Based on {kpiAverages.totalEvals} evaluations
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <KPICard
+            label="Product Knowledge"
+            value={kpiAverages.product}
+            icon={<Brain className="text-blue-400" size={18} />}
+            color="from-blue-500 to-blue-600"
+          />
+          <KPICard
+            label="Phone Etiquette"
+            value={kpiAverages.etiquette}
+            icon={<PhoneCall className="text-indigo-400" size={18} />}
+            color="from-indigo-500 to-indigo-600"
+          />
+          <KPICard
+            label="Problem Solving"
+            value={kpiAverages.solving}
+            icon={<Target className="text-purple-400" size={18} />}
+            color="from-purple-500 to-purple-600"
+          />
+          <KPICard
+            label="Upselling"
+            value={kpiAverages.upsell}
+            icon={<TrendingUp className="text-emerald-400" size={18} />}
+            color="from-emerald-500 to-emerald-600"
+          />
+          <KPICard
+            label="Promotion"
+            value={kpiAverages.promo}
+            icon={<Star className="text-amber-400" size={18} />}
+            color="from-amber-500 to-amber-600"
+          />
+          <KPICard
+            label="Info Capture"
+            value={kpiAverages.capture}
+            icon={<CheckCircle className="text-rose-400" size={18} />}
+            color="from-rose-500 to-rose-600"
+          />
+        </div>
+
+        {/* Performance Summary */}
+        <div className="mt-6 pt-4 border-t border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-slate-800/50 rounded-xl p-3">
+            <p className="text-[10px] text-slate-400">Top Performing KPI</p>
+            <p className="text-sm font-bold text-white">
+              {Object.entries({
+                'Product Knowledge': kpiAverages.product,
+                'Phone Etiquette': kpiAverages.etiquette,
+                'Problem Solving': kpiAverages.solving,
+                'Upselling': kpiAverages.upsell,
+                'Promotion': kpiAverages.promo,
+                'Info Capture': kpiAverages.capture,
+              }).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'}
+            </p>
+          </div>
+          <div className="bg-slate-800/50 rounded-xl p-3">
+            <p className="text-[10px] text-slate-400">KPI Needing Improvement</p>
+            <p className="text-sm font-bold text-white">
+              {Object.entries({
+                'Product Knowledge': kpiAverages.product,
+                'Phone Etiquette': kpiAverages.etiquette,
+                'Problem Solving': kpiAverages.solving,
+                'Upselling': kpiAverages.upsell,
+                'Promotion': kpiAverages.promo,
+                'Info Capture': kpiAverages.capture,
+              }).sort((a, b) => a[1] - b[1])[0]?.[0] || 'N/A'}
+            </p>
+          </div>
+          <div className="bg-slate-800/50 rounded-xl p-3">
+            <p className="text-[10px] text-slate-400">Overall Average</p>
+            <p className="text-sm font-bold text-white">
+              {Math.round(
+                (kpiAverages.product + kpiAverages.etiquette + kpiAverages.solving + 
+                 kpiAverages.upsell + kpiAverages.promo + kpiAverages.capture) / 6
+              )}%
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Agent Performance Table - UPDATED with Avg Int/Tkt column */}
+      <div className="bg-[#1e293b] border border-slate-800 rounded-2xl overflow-hidden">
         <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/20">
           <h3 className="text-white font-semibold">Agent Performance Table</h3>
           <div className="relative">
@@ -465,7 +611,9 @@ export const AdminDashboard: React.FC<Props> = ({
                 <th className="px-6 py-4">Current Status</th>
                 <th className="px-6 py-4 text-center">Answered</th>
                 <th className="px-6 py-4 text-center">Tickets</th>
+                <th className="px-6 py-4 text-center">Avg Int/Tkt</th>
                 <th className="px-6 py-4 text-center">CSAT</th>
+                <th className="px-6 py-4 text-center">KPI Score</th>
                 <th className="px-6 py-4 text-center">Cheese %</th>
                 <th className="px-6 py-4 text-right">Action</th>
               </tr>
@@ -493,6 +641,32 @@ export const AdminDashboard: React.FC<Props> = ({
                   agent.evaluations.length > 0
                     ? agent.evaluations[agent.evaluations.length - 1]?.score
                     : 0;
+                
+                // Calculate average KPI score for this agent
+                const agentKpiAvg = agent.evaluations.length > 0
+                  ? Math.round(
+                      agent.evaluations.reduce((sum, e) => {
+                        const kpiSum = (e.kpis.product || 0) + (e.kpis.etiquette || 0) + 
+                                      (e.kpis.solving || 0) + (e.kpis.upsell || 0) + 
+                                      (e.kpis.promo || 0) + (e.kpis.capture || 0);
+                        return sum + (kpiSum / 6);
+                      }, 0) / agent.evaluations.length
+                    )
+                  : 0;
+                
+                // NEW: Calculate average interactions per ticket for this agent
+                const agentTotalInteractions = agent.history.reduce(
+                  (s, h) => s + (h.interactions || 0),
+                  0,
+                );
+                const agentTotalTickets = agent.history.reduce(
+                  (s, h) => s + (h.totalTickets || 0),
+                  0,
+                );
+                const agentAvgInteractions = agentTotalTickets > 0
+                  ? (agentTotalInteractions / agentTotalTickets).toFixed(1)
+                  : "0";
+                
                 return (
                 <tr
                   key={agent.id}
@@ -522,8 +696,21 @@ export const AdminDashboard: React.FC<Props> = ({
                     {totalTickets}
                   </td>
                   <td className="px-6 py-4 text-center">
+                    <span className="text-sm font-black text-cyan-400">
+                      {agentAvgInteractions}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
                     <span className="text-sm font-black text-indigo-400">
                       {latestScore}%
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`text-sm font-black ${
+                      agentKpiAvg >= 80 ? 'text-emerald-400' : 
+                      agentKpiAvg >= 60 ? 'text-amber-400' : 'text-rose-400'
+                    }`}>
+                      {agentKpiAvg}%
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">
@@ -550,8 +737,8 @@ export const AdminDashboard: React.FC<Props> = ({
   );
 };
 
-const MetricCard = ({ title, value, change, icon, isNegative }: any) => (
-  <div className="bg-[#1e293b]/50 border border-slate-800 p-5 rounded-2xl relative overflow-hidden group hover:border-indigo-500/50 transition-all shadow-lg min-h-[120px]">
+const MetricCard = ({ title, value, change, icon }: any) => (
+  <div className="bg-[#1e293b] border border-slate-800 p-5 rounded-2xl relative overflow-hidden group hover:border-indigo-500/50 transition-all">
     <div className="flex justify-between items-start gap-3">
       <div className="min-w-0">
         <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-2 truncate">
@@ -562,9 +749,7 @@ const MetricCard = ({ title, value, change, icon, isNegative }: any) => (
             {value}
           </span>
           {change && (
-            <span
-              className={`text-[9px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap ${isNegative ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500"}`}
-            >
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap bg-emerald-500/10 text-emerald-500">
               {change}
             </span>
           )}
@@ -573,6 +758,24 @@ const MetricCard = ({ title, value, change, icon, isNegative }: any) => (
       <div className="shrink-0 p-2.5 bg-slate-900 rounded-xl border border-slate-800 text-indigo-400 group-hover:scale-110 transition-transform">
         {icon}
       </div>
+    </div>
+  </div>
+);
+
+const KPICard = ({ label, value, icon, color }: any) => (
+  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-indigo-500/50 transition-all group">
+    <div className="flex items-center justify-between mb-3">
+      <div className={`p-2 rounded-lg bg-gradient-to-br ${color} bg-opacity-20`}>
+        {icon}
+      </div>
+      <span className="text-xl font-black text-white">{value}%</span>
+    </div>
+    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
+    <div className="mt-2 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+      <div 
+        className={`h-full rounded-full bg-gradient-to-r ${color}`}
+        style={{ width: `${value}%` }}
+      ></div>
     </div>
   </div>
 );
