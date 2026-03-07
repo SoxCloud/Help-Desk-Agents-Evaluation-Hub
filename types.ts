@@ -40,11 +40,13 @@ export interface Kpis {
 }
 
 export interface AgentEval {
+  id: string;
   kpis: Kpis;
   date: string;
   evaluator?: string;
   called?: string;
   callType?: string;
+  duration?: string;
   durationSeconds?: number;
   overallRating?: number;
   score: number;
@@ -78,7 +80,6 @@ export interface User {
 export interface Evaluation extends AgentEval {
   // This extends AgentEval, so it inherits all its properties
   // You can add any additional fields specific to Evaluation here if needed
-  id?: string; // Optional ID if needed
 }
 
 // OR if you don't want to use extends, define it explicitly:

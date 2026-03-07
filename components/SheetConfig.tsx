@@ -1,4 +1,4 @@
-import { Agent, AgentStatus, UserRole } from "../types";
+import { Agent, AgentStatus, UserRole, AgentEval } from "../types";
 
 const SHEET_ID = "1_MEcMoGiXuYhmxwKv0-Cc0SryMYVIpVOMO6ea2MrKwY";
 
@@ -26,6 +26,17 @@ const normalizeDate = (dateStr: string): string => {
   return cleanDate;
 };
 
+// Helper to preserve leading zeros in cellphone numbers
+const preserveCellphoneNumber = (value: string): string => {
+  if (!value || value === "undefined") return "";
+  const strValue = value.toString();
+  // If it's a number without leading zero, add it back
+  if (strValue.match(/^\d+$/) && strValue.length === 9) {
+    return `0${strValue}`;
+  }
+  return strValue;
+};
+
 async function fetchTabCsv(tabName: string) {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${tabName}`;
   const response = await fetch(url);
@@ -40,75 +51,105 @@ async function fetchTabCsv(tabName: string) {
 }
 
 export const fetchAllDashboardData = async () => {
-  // DailyStats: combined view of per‑agent / per‑day metrics
+  // Fetch all necessary tabs
   const [dailyData, evalData, formData] = await Promise.all([
     fetchTabCsv("AgentsV1"),
     fetchTabCsv("DailyStatsV1"),
-    fetchTabCsv("CallEvaluationsV1"),
-   fetchTabCsv("FormData"),
+    fetchTabCsv("CallEvaluationsV1"), // Your evaluations sheet
+    fetchTabCsv("FormData"),
   ]);
 
   const agentsMap: Record<string, Agent> = {};
 
-  // 1. Process CallEvaluations (Mapping from image_141a5a)
+  // 1. Process CallEvaluations tab with exact column mapping from your image
   evalData.slice(1).forEach((row) => {
-    // A:agent, B:email, D:Date, E:evaluator, H:Prod, I:Etiquette, J:Problem, K:Upsell, L:Promo, M:Capture, O:Pos, P:Improv, Q:Rating
+    // Based on your image columns:
+    // agent | email | callId | Date | evaluator | callType | duration | 
+    // productKnowledgeScore | phoneEtiquetteScore | problemSolvingScore | 
+    // upsellingScore | promotionScore | infoCapturingScore | 
+    // evaluatorComment | positivePoints | improvementAreas | overallRating
     const [
       name,
       email,
-      ,
+      callId,
       date,
       evaluator,
-      ,
-      ,
-      prod,
-      etiquette,
-      problem,
-      upsell,
-      promo,
-      capture,
-      comments,
-      positive,
-      improvement,
-      rating,
+      callType,
+      duration,
+      productKnowledgeScore,
+      phoneEtiquetteScore,
+      problemSolvingScore,
+      upsellingScore,
+      promotionScore,
+      infoCapturingScore,
+      evaluatorComment,
+      positivePoints,
+      improvementAreas,
+      overallRating,
     ] = row;
 
-    if (!email || email === "email" || isNaN(parseFloat(rating))) return; // Skip headers/empty
+    // Skip if no valid email
+    if (!email || email === "email" || !email.includes('@')) return;
 
+    // Create agent if doesn't exist
     if (!agentsMap[email]) {
       agentsMap[email] = {
         id: email,
-        name,
+        name: name || "Unknown Agent",
         email,
         role: UserRole.AGENT,
         status: AgentStatus.OFFLINE,
-        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
+        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "Agent")}&background=random`,
         history: [],
         evaluations: [],
       };
     }
 
-    agentsMap[email].evaluations.push({
+    // Parse duration from HH:MM:SS format to seconds
+    let durationSeconds = 0;
+    if (duration) {
+      const timeParts = duration.split(':').map(Number);
+      if (timeParts.length === 3) {
+        durationSeconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2];
+      } else if (timeParts.length === 2) {
+        durationSeconds = timeParts[0] * 60 + timeParts[1];
+      }
+    }
+
+    // Calculate score from overallRating (1-5 scale to percentage)
+    const rating = parseFloat(overallRating) || 0;
+    const score = rating * 20; // Convert 1-5 to 0-100
+
+    // Preserve the cellphone number with leading zero
+    const preservedCallId = preserveCellphoneNumber(callId || "");
+
+    // Create evaluation object with all 7 KPIs from your sheet
+    const evaluation: AgentEval = {
+      id: preservedCallId || `eval-${Date.now()}-${Math.random()}`,
       date: normalizeDate(date),
-      evaluator,
-      score: (parseFloat(rating) / 5) * 100, // 1-5 scale to 100%
-      positivePoints: positive,
-      improvementAreas: improvement,
-      comments,
+      evaluator: evaluator || undefined,
+      callType: callType || undefined,
+      duration: duration || undefined,
+      durationSeconds: durationSeconds || undefined,
+      overallRating: rating || undefined,
+      score: score,
+      positivePoints: positivePoints || undefined,
+      improvementAreas: improvementAreas || undefined,
+      comments: evaluatorComment || positivePoints || improvementAreas || "No comments recorded",
       kpis: {
-        product: parseInt(prod) || 0,
-        etiquette: parseInt(etiquette) || 0,
-        solving: parseInt(problem) || 0,
-        upsell: parseInt(upsell) || 0,
-        promo: parseInt(promo) || 0,
-        capture: parseInt(capture) || 0,
+        product: parseInt(productKnowledgeScore) || 0,
+        etiquette: parseInt(phoneEtiquetteScore) || 0,
+        solving: parseInt(problemSolvingScore) || 0,
+        upsell: parseInt(upsellingScore) || 0,
+        promo: parseInt(promotionScore) || 0,
+        capture: parseInt(infoCapturingScore) || 0,
       },
-    });
+    };
+
+    agentsMap[email].evaluations.push(evaluation);
   });
 
   // 2. Process DailyStats tab (one row per agent per day)
-  // Expected header (row 1):
-  // Agent | Date | Answered calls | Abandoned calls | Transactions | Total tickets | Interactions | Solved tickets | Escalated tickets | AHT (sec) | Avg resolution time (sec) | Resolution rate | Escalation rate | Cheese upsell %
   dailyData.slice(1).forEach((row) => {
     const [
       name,
@@ -128,7 +169,7 @@ export const fetchAllDashboardData = async () => {
     ] = row;
 
     const agent = Object.values(agentsMap).find(
-      (a) => normalizeName(a.name) === normalizeName(name),
+      (a) => normalizeName(a.name) === normalizeName(name || ""),
     );
 
     if (agent) {
@@ -140,12 +181,14 @@ export const fetchAllDashboardData = async () => {
         totalTickets: parseInt(totalTickets) || 0,
         interactions: parseInt(interactions) || 0,
         aht: ahtSeconds ? `${ahtSeconds}s` : "0s",
+        ahtSeconds: parseInt(ahtSeconds) || 0,
         resolutionRate: parseFloat(resolutionRate) || 0,
         solvedTickets: parseInt(solvedTickets) || 0,
         escalatedTickets: parseInt(escalatedTickets) || 0,
         avgResolutionTime: avgResolutionSeconds
           ? `${avgResolutionSeconds}s`
           : "0s",
+        avgResolutionSeconds: parseInt(avgResolutionSeconds) || 0,
         escalationRate: parseFloat(escalationRate) || 0,
         cheeseUpsellPercentage: parseFloat(cheeseUpsellPct) || 0,
       });

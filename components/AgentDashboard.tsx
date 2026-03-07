@@ -110,6 +110,8 @@ export const AgentDashboard: React.FC<Props> = ({
     etiquette: 0,
     solving: 0,
     product: 0,
+    upsell: 0,
+    promo: 0,
   };
   const currentScore = latestEval?.score || 0;
 
@@ -343,6 +345,15 @@ export const AgentDashboard: React.FC<Props> = ({
     a.href = url;
     a.download = `${agent.name}-performance-${dateRange.start}.json`;
     a.click();
+  };
+
+  // Format phone number for display
+  const formatPhoneNumber = (phone: string) => {
+    if (!phone) return "Unknown";
+    if (phone.match(/^\d{9}$/)) {
+      return `0${phone}`;
+    }
+    return phone;
   };
 
   return (
@@ -673,7 +684,7 @@ export const AgentDashboard: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Competency Section */}
+            {/* Competency Section - UPDATED to show all 6 KPIs */}
             <div className="bg-[#1e293b]/40 border border-slate-800 p-8 rounded-[2rem] relative overflow-hidden">
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-3">
@@ -681,15 +692,15 @@ export const AgentDashboard: React.FC<Props> = ({
                     <TrendingUp size={20} />
                   </div>
                   <h3 className="text-xl font-bold text-white">
-                    Consolidated Competency
+                    Performance Metrics
                   </h3>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8">
                 <ThickKPI
-                  label="Information Capture"
-                  value={kpis.capture || 0}
+                  label="Product Knowledge"
+                  value={kpis.product || 0}
                   color="bg-blue-500"
                 />
                 <ThickKPI
@@ -703,9 +714,19 @@ export const AgentDashboard: React.FC<Props> = ({
                   color="bg-purple-500"
                 />
                 <ThickKPI
-                  label="Product Knowledge"
-                  value={kpis.product || 0}
+                  label="Upselling"
+                  value={kpis.upsell || 0}
                   color="bg-emerald-500"
+                />
+                <ThickKPI
+                  label="Promotion"
+                  value={kpis.promo || 0}
+                  color="bg-amber-500"
+                />
+                <ThickKPI
+                  label="Information Capture"
+                  value={kpis.capture || 0}
+                  color="bg-rose-500"
                 />
               </div>
             </div>
@@ -745,7 +766,7 @@ export const AgentDashboard: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Right Sidebar */}
+          {/* Right Sidebar - unchanged */}
           <div className="lg:col-span-4 space-y-6">
             {/* AI Coach Card */}
             <div className="bg-gradient-to-br from-indigo-600 to-indigo-900 border border-indigo-500/30 p-8 rounded-[2rem] shadow-2xl">
@@ -941,102 +962,130 @@ export const AgentDashboard: React.FC<Props> = ({
           </div>
         </div>
       ) : (
-        /* EVALUATIONS VIEW */
+        /* EVALUATIONS VIEW - UPDATED with all 6 KPIs */
         <div className="grid grid-cols-1 gap-6 animate-in slide-in-from-bottom-6 duration-500">
-          {(filteredEvaluations.length ? filteredEvaluations : agent.evaluations).map((evalItem, idx) => (
-            <div
-              key={idx}
-              className="bg-[#1e293b]/40 border border-slate-800 rounded-[2rem] overflow-hidden flex flex-col shadow-2xl group hover:border-indigo-500/40 transition-all"
-            >
-              <div className="p-6 border-b border-slate-800 flex flex-col md:flex-row justify-between items-center bg-slate-900/40 gap-4">
-                <div className="flex items-center gap-5">
-                  <div className="p-4 bg-indigo-600/20 rounded-2xl text-indigo-400 border border-indigo-500/20 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                    <MessageSquare size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-xl">
-                      Call Feedback #{1000 + idx}
-                    </h3>
-                    <div className="flex gap-4 mt-1 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                      <span className="flex items-center gap-1.5 font-bold">
-                        <Calendar size={12} className="text-indigo-500" />{" "}
-                        {evalItem.date || dateRange.start}
-                      </span>
-                      <span className="flex items-center gap-1.5 font-bold">
-                        <Clock size={12} className="text-indigo-500" />{" "}
-                        {evalItem.durationSeconds
-                          ? `${Math.floor(evalItem.durationSeconds / 60)
-                              .toString()
-                              .padStart(2, "0")}:${(evalItem.durationSeconds % 60)
-                              .toString()
-                              .padStart(2, "0")} MIN`
-                          : "N/A"}
-                      </span>
+          {(filteredEvaluations.length ? filteredEvaluations : agent.evaluations).map((evalItem, idx) => {
+            const phoneNumber = evalItem.id ? formatPhoneNumber(evalItem.id) : `#${1000 + idx}`;
+            
+            return (
+              <div
+                key={idx}
+                className="bg-[#1e293b]/40 border border-slate-800 rounded-[2rem] overflow-hidden flex flex-col shadow-2xl group hover:border-indigo-500/40 transition-all"
+              >
+                <div className="p-6 border-b border-slate-800 flex flex-col md:flex-row justify-between items-center bg-slate-900/40 gap-4">
+                  <div className="flex items-center gap-5">
+                    <div className="p-4 bg-indigo-600/20 rounded-2xl text-indigo-400 border border-indigo-500/20 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                      <MessageSquare size={24} />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-xl">
+                        Call from: {phoneNumber}
+                      </h3>
+                      <div className="flex gap-4 mt-1 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                        <span className="flex items-center gap-1.5 font-bold">
+                          <Calendar size={12} className="text-indigo-500" />{" "}
+                          {evalItem.date || dateRange.start}
+                        </span>
+                        <span className="flex items-center gap-1.5 font-bold">
+                          <Clock size={12} className="text-indigo-500" />{" "}
+                          {evalItem.duration || 
+                            (evalItem.durationSeconds
+                              ? `${Math.floor(evalItem.durationSeconds / 60)
+                                  .toString()
+                                  .padStart(2, "0")}:${(evalItem.durationSeconds % 60)
+                                  .toString()
+                                  .padStart(2, "0")} MIN`
+                              : "N/A")}
+                        </span>
+                        {evalItem.callType && (
+                          <span className="flex items-center gap-1.5 font-bold">
+                            <PhoneCall size={12} className="text-indigo-500" />{" "}
+                            {evalItem.callType}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-slate-950 px-8 py-3 rounded-2xl border border-slate-800 text-center min-w-[160px]">
-                  <p className="text-[9px] text-indigo-400 font-black uppercase mb-0.5 tracking-widest">
-                    Score
-                  </p>
-                  <span
-                    className={`text-3xl font-black ${
-                      evalItem.score >= 90 ? "text-emerald-400" : "text-orange-400"
-                    }`}
-                  >
-                    {evalItem.score}%
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-12">
-                <div className="space-y-6">
-                  <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
-                    KPI Scorecard
-                  </h4>
-                  <ThickKPI
-                    label="Phone Etiquette"
-                    value={evalItem.kpis.etiquette}
-                    color="bg-blue-500"
-                  />
-                  <ThickKPI
-                    label="Problem Solving"
-                    value={evalItem.kpis.solving}
-                    color="bg-indigo-500"
-                  />
-                  <ThickKPI
-                    label="Product Knowledge"
-                    value={evalItem.kpis.product}
-                    color="bg-purple-500"
-                  />
-                  <ThickKPI
-                    label="Information Capture"
-                    value={evalItem.kpis.capture}
-                    color="bg-emerald-500"
-                  />
-                </div>
-
-                <div className="flex flex-col h-full">
-                  <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">
-                    Evaluator Comments
-                  </h4>
-                  <div className="flex-1 bg-slate-900/60 rounded-3xl p-6 border border-slate-800 relative">
-                    <p className="text-slate-300 text-sm leading-relaxed italic relative z-10">
-                      "
-                      {evalItem.comments ||
-                        "Agent demonstrated excellent control over the call flow. Focus area: Ensure script compliance during the mandatory privacy disclosure."}
-                      "
+                  <div className="bg-slate-950 px-8 py-3 rounded-2xl border border-slate-800 text-center min-w-[160px]">
+                    <p className="text-[9px] text-indigo-400 font-black uppercase mb-0.5 tracking-widest">
+                      Score
                     </p>
-                    <div className="mt-8 pt-6 border-t border-slate-800/50 flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                      <span>Status: Finalized</span>
-                      <span className="text-indigo-400">OmniDesk QA Team</span>
+                    <span
+                      className={`text-3xl font-black ${
+                        evalItem.score >= 90 ? "text-emerald-400" : "text-orange-400"
+                      }`}
+                    >
+                      {evalItem.score}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-12">
+                  <div className="space-y-6">
+                    <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
+                      Performance Metrics
+                    </h4>
+                    <ThickKPI
+                      label="Product Knowledge"
+                      value={evalItem.kpis.product || 0}
+                      color="bg-blue-500"
+                    />
+                    <ThickKPI
+                      label="Phone Etiquette"
+                      value={evalItem.kpis.etiquette || 0}
+                      color="bg-indigo-500"
+                    />
+                    <ThickKPI
+                      label="Problem Solving"
+                      value={evalItem.kpis.solving || 0}
+                      color="bg-purple-500"
+                    />
+                    <ThickKPI
+                      label="Upselling"
+                      value={evalItem.kpis.upsell || 0}
+                      color="bg-emerald-500"
+                    />
+                    <ThickKPI
+                      label="Promotion"
+                      value={evalItem.kpis.promo || 0}
+                      color="bg-amber-500"
+                    />
+                    <ThickKPI
+                      label="Information Capture"
+                      value={evalItem.kpis.capture || 0}
+                      color="bg-rose-500"
+                    />
+                  </div>
+
+                  <div className="flex flex-col h-full">
+                    <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">
+                      Evaluator Comments
+                    </h4>
+                    <div className="flex-1 bg-slate-900/60 rounded-3xl p-6 border border-slate-800 relative">
+                      <p className="text-slate-300 text-sm leading-relaxed italic relative z-10">
+                        "
+                        {evalItem.comments ||
+                          evalItem.positivePoints ||
+                          evalItem.improvementAreas ||
+                          "No comments recorded"}
+                        "
+                      </p>
+                      {evalItem.evaluator && (
+                        <p className="text-[10px] text-indigo-400 mt-3 font-bold">
+                          - {evalItem.evaluator}
+                        </p>
+                      )}
+                      <div className="mt-8 pt-6 border-t border-slate-800/50 flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                        <span>Status: Finalized</span>
+                        <span className="text-indigo-400">OmniDesk QA Team</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
