@@ -251,9 +251,9 @@ export const AdminDashboard: React.FC<Props> = ({
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Dashboard Overview
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+  Dashboard Overview
+</h1>
           <p className="text-slate-400 text-sm">
             Real-time performance metrics from Master Sheet
           </p>
