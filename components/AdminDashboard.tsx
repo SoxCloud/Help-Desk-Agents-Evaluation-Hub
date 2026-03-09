@@ -14,6 +14,7 @@ import {
   Brain,
   Star,
   BarChart4,
+  Ticket,
 } from "lucide-react";
 import {
   BarChart,
@@ -73,6 +74,18 @@ export const AdminDashboard: React.FC<Props> = ({
       a.history.reduce((inner, h) => inner + (h.answeredCalls || 0), 0),
     0,
   );
+
+  // ABANDONED CALLS STATS
+  const totalAbandonedCalls = agentsWithFilteredHistory.reduce(
+    (sum, a) =>
+      sum +
+      a.history.reduce((inner, h) => inner + (h.abandonedCalls || 0), 0),
+    0,
+  );
+
+  const callAbandonedRate = totalCalls > 0
+    ? ((totalAbandonedCalls / totalCalls) * 100).toFixed(1)
+    : "0";
 
   // EVALUATION STATS
   const allEvaluations = agentsWithFilteredHistory.flatMap((a) => a.evaluations);
@@ -157,8 +170,9 @@ export const AdminDashboard: React.FC<Props> = ({
 
   const avgResolutionTime =
     avgResSamples > 0
-      ? `${Math.round(totalAvgResSeconds / avgResSamples/60).toFixed(1)}'`
+      ? `${Math.round(totalAvgResSeconds / avgResSamples/60).toFixed(1)}m`
       : "0m";
+
   // Team cheese upsell % (average across all days in range)
   const totalDays = agentsWithFilteredHistory.reduce(
     (s, a) => s + a.history.length,
@@ -274,61 +288,82 @@ export const AdminDashboard: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Stats Grid - UPDATED with Avg Interactions/Ticket */}
+      {/* Stats Grid - GROUPED by Ticket Stats and Call Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <MetricCard
-          title="Total Calls"
-          value={totalCalls}
-          change="In range"
-          icon={<PhoneCall className="text-blue-400" />}
-        />
+        {/* TICKET STATS GROUP */}
         <MetricCard
           title="Total Tickets"
           value={totalTickets}
-          change="In range"
-          icon={<Activity className="text-violet-400" />}
+          change="All tickets"
+          icon={<Ticket className="text-violet-400" />}
         />
         <MetricCard
-          title="Evaluated Recordings"
-          value={totalEvaluatedCalls}
-          change="In range"
+          title="Solved Tickets"
+          value={totalSolved}
+          change={`${Math.round((totalSolved/totalTickets)*100)}% of total`}
           icon={<CheckCircle className="text-emerald-400" />}
         />
         <MetricCard
-          title="Avg Handle Time"
-          value={`${avgHandleTimeMinutes}m`}
-          change="Team avg"
-          icon={<Clock className="text-orange-400" />}
-        />
-        <MetricCard
-          title="Avg Resolution Time"
-         value={avgResolutionTime}
-          change="Team avg"
-          icon={<Clock className="text-sky-400" />}
-        />
-        <MetricCard
-          title="Team QA Average"
-          value={`${teamAverageScore}%`}
-          change="In range"
-          icon={<CheckCircle className="text-emerald-400" />}
-        />
-        <MetricCard
-          title="Active Agents"
-          value={`${activeAgents}/${agents.length}`}
-          icon={<Users className="text-purple-400" />}
+          title="Escalated Tickets"
+          value={totalEscalated}
+          change={`${weightedEscalationRate}%`}
+          icon={<Activity className="text-rose-400" />}
         />
         <MetricCard
           title="Resolution Rate"
           value={`${weightedResolutionRate}%`}
-          change="Weighted"
+          change="Success rate"
+          icon={<Target className="text-emerald-400" />}
+        />
+        
+        {/* CALL STATS GROUP */}
+        <MetricCard
+          title="Total Calls"
+          value={totalCalls}
+          change="All calls"
+          icon={<PhoneCall className="text-blue-400" />}
+        />
+        <MetricCard
+          title="Abandoned Calls"
+          value={totalAbandonedCalls}
+          change={`${callAbandonedRate}%`}
+          icon={<Activity className="text-rose-400" />}
+        />
+        <MetricCard
+          title="Avg Handle Time"
+          value={`${avgHandleTimeMinutes}m`}
+          change="Per call"
+          icon={<Clock className="text-orange-400" />}
+        />
+        <MetricCard
+          title="Avg Resolution Time"
+          value={avgResolutionTime}
+          change="Per ticket"
+          icon={<Clock className="text-sky-400" />}
+        />
+        
+        {/* EVALUATION STATS */}
+        <MetricCard
+          title="Evaluated Recordings"
+          value={totalEvaluatedCalls}
+          change="Total evals"
           icon={<CheckCircle className="text-emerald-400" />}
         />
         <MetricCard
-          title="Escalation Rate"
-          value={`${weightedEscalationRate}%`}
-          change="Weighted"
-          icon={<Activity className="text-rose-400" />}
+          title="Team QA Average"
+          value={`${teamAverageScore}%`}
+          change="Avg score"
+          icon={<Award className="text-purple-400" />}
         />
+        
+        {/* AGENT STATS */}
+        <MetricCard
+          title="Active Agents"
+          value={`${activeAgents}/${agents.length}`}
+          icon={<Users className="text-indigo-400" />}
+        />
+        
+        {/* INTERACTION STATS */}
         <MetricCard
           title="Total Interactions"
           value={totalInteractions}
@@ -338,13 +373,15 @@ export const AdminDashboard: React.FC<Props> = ({
         <MetricCard
           title="Avg Interactions/Ticket"
           value={avgInteractionsPerTicket}
-          change="Team avg"
+          change="Per ticket"
           icon={<Activity className="text-cyan-400" />}
         />
+        
+        {/* UPSELL STATS */}
         <MetricCard
           title="Cheese upsell %"
           value={`${avgCheeseUpsell}%`}
-          change="Team avg"
+          change="Avg per day"
           icon={<Activity className="text-amber-400" />}
         />
       </div>
@@ -584,7 +621,7 @@ export const AdminDashboard: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Agent Performance Table - UPDATED with Avg Int/Tkt column */}
+      {/* Agent Performance Table */}
       <div className="bg-[#1e293b] border border-slate-800 rounded-2xl overflow-hidden">
         <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/20">
           <h3 className="text-white font-semibold">Agent Performance Table</h3>
@@ -609,6 +646,7 @@ export const AdminDashboard: React.FC<Props> = ({
                 <th className="px-6 py-4">Agent Name</th>
                 <th className="px-6 py-4">Current Status</th>
                 <th className="px-6 py-4 text-center">Answered</th>
+                <th className="px-6 py-4 text-center">Abandoned %</th>
                 <th className="px-6 py-4 text-center">Tickets</th>
                 <th className="px-6 py-4 text-center">Avg Int/Tkt</th>
                 <th className="px-6 py-4 text-center">CSAT</th>
@@ -623,6 +661,13 @@ export const AdminDashboard: React.FC<Props> = ({
                   (s, h) => s + (h.answeredCalls || 0),
                   0,
                 );
+                const totalAbandoned = agent.history.reduce(
+                  (s, h) => s + (h.abandonedCalls || 0),
+                  0,
+                );
+                const abandonedRate = totalAnswered > 0
+                  ? ((totalAbandoned / totalAnswered) * 100).toFixed(1)
+                  : "0";
                 const totalTickets = agent.history.reduce(
                   (s, h) => s + (h.totalTickets || 0),
                   0,
@@ -653,7 +698,7 @@ export const AdminDashboard: React.FC<Props> = ({
                     )
                   : 0;
                 
-                // NEW: Calculate average interactions per ticket for this agent
+                // Calculate average interactions per ticket for this agent
                 const agentTotalInteractions = agent.history.reduce(
                   (s, h) => s + (h.interactions || 0),
                   0,
@@ -690,6 +735,14 @@ export const AdminDashboard: React.FC<Props> = ({
                   </td>
                   <td className="px-6 py-4 text-sm font-black text-slate-300 text-center">
                     {totalAnswered}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`text-sm font-black ${
+                      parseFloat(abandonedRate) > 5 ? 'text-rose-400' : 
+                      parseFloat(abandonedRate) > 2 ? 'text-amber-400' : 'text-emerald-400'
+                    }`}>
+                      {abandonedRate}%
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-sm font-black text-slate-300 text-center">
                     {totalTickets}

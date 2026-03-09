@@ -65,12 +65,14 @@ export const AgentDashboard: React.FC<Props> = ({
   const [showTrends, setShowTrends] = useState(false);
   const [mood, setMood] = useState<'great' | 'good' | 'okay' | 'tired' | null>(null);
   const [tipIndex, setTipIndex] = useState(0);
+  const [isEditingGoals, setIsEditingGoals] = useState(false);
   const [goals, setGoals] = useState([
     { id: 1, name: 'Calls', target: 50, current: 0, unit: 'calls' },
     { id: 2, name: 'QA Score', target: 90, current: 0, unit: '%' },
     { id: 3, name: 'Resolution Rate', target: 85, current: 0, unit: '%' },
     { id: 4, name: 'Tickets Solved', target: 40, current: 0, unit: 'tickets' },
   ]);
+  const [editableGoals, setEditableGoals] = useState(goals);
 
   const tips = [
     { icon: <Zap size={16} />, text: 'Try to acknowledge customer by name twice per call' },
@@ -955,55 +957,105 @@ export const AgentDashboard: React.FC<Props> = ({
             </div>
 
             {/* Weekly Goals */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-indigo-500/30">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-white font-bold flex items-center gap-2">
-                  <Target size={18} className="text-indigo-400" />
-                  Weekly Goals
-                </h4>
-                <button 
-                  className="text-[10px] text-indigo-400 hover:text-indigo-300"
-                  title="Edit your goals"
-                >
-                  Edit Goals
-                </button>
-              </div>
-              <div className="space-y-4">
-                {goals.map((goal) => {
-                  const progress = Math.min(100, (goal.current / goal.target) * 100);
-                  const isComplete = goal.current >= goal.target;
-                  
-                  return (
-                    <div key={goal.id} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">{goal.name}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-white font-bold">
-                            {goal.current}{goal.unit}
-                          </span>
-                          <span className="text-slate-500">
-                            / {goal.target}{goal.unit}
-                          </span>
-                          {isComplete && (
-                            <span className="text-emerald-400 text-[10px] flex items-center gap-0.5">
-                              ✓ Done
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            isComplete ? 'bg-gradient-to-r from-emerald-500 to-green-500' : 'bg-indigo-500'
-                          }`}
-                          style={{ width: `${progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+           {/* Weekly Goals - EDITABLE */}
+<div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-indigo-500/30">
+  <div className="flex items-center justify-between mb-4">
+    <h4 className="text-white font-bold flex items-center gap-2">
+      <Target size={18} className="text-indigo-400" />
+      Weekly Goals
+    </h4>
+    <button 
+      onClick={() => setIsEditingGoals(!isEditingGoals)}
+      className="text-[10px] text-indigo-400 hover:text-indigo-300"
+      title={isEditingGoals ? "Save goals" : "Edit your goals"}
+    >
+      {isEditingGoals ? "Save" : "Edit Goals"}
+    </button>
+  </div>
+  
+  <div className="space-y-4">
+    {editableGoals.map((goal) => {
+      const progress = Math.min(100, (goal.current / goal.target) * 100);
+      const isComplete = goal.current >= goal.target;
+      
+      return (
+        <div key={goal.id} className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-400">{goal.name}</span>
+            <div className="flex items-center gap-2">
+              {isEditingGoals ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    value={goal.target}
+                    onChange={(e) => {
+                      const newGoals = editableGoals.map(g => 
+                        g.id === goal.id ? {...g, target: parseInt(e.target.value) || 0} : g
+                      );
+                      setEditableGoals(newGoals);
+                    }}
+                    className="w-16 bg-slate-700 text-white text-xs rounded px-2 py-1 border border-slate-600"
+                    min="1"
+                  />
+                  <span className="text-slate-400">{goal.unit}</span>
+                </div>
+              ) : (
+                <>
+                  <span className="text-white font-bold">
+                    {goal.current}{goal.unit}
+                  </span>
+                  <span className="text-slate-500">
+                    / {goal.target}{goal.unit}
+                  </span>
+                </>
+              )}
+              {isComplete && !isEditingGoals && (
+                <span className="text-emerald-400 text-[10px] flex items-center gap-0.5">
+                  ✓ Done
+                </span>
+              )}
             </div>
+          </div>
+          {!isEditingGoals && (
+            <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-500 ${
+                  isComplete ? 'bg-gradient-to-r from-emerald-500 to-green-500' : 'bg-indigo-500'
+                }`}
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+  
+  {isEditingGoals && (
+    <div className="mt-4 flex gap-2">
+      <button
+        onClick={() => {
+          setGoals(editableGoals);
+          setIsEditingGoals(false);
+          // Save to localStorage or backend
+          localStorage.setItem('agentGoals', JSON.stringify(editableGoals));
+        }}
+        className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold transition-colors"
+      >
+        Save Changes
+      </button>
+      <button
+        onClick={() => {
+          setEditableGoals(goals);
+          setIsEditingGoals(false);
+        }}
+        className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-xs font-bold transition-colors"
+      >
+        Cancel
+      </button>
+    </div>
+  )}
+</div>
 
             {/* Achievements */}
             <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-indigo-500/30">
