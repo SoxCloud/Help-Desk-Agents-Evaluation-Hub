@@ -47,6 +47,14 @@ const parseTimeToSeconds = (value: string): number => {
   return 0;
 };
 
+// Helper to parse monetary values (remove R, spaces, commas)
+const parseMoney = (value: string): number => {
+  if (!value) return 0;
+  // Remove 'R', spaces, commas and convert to number
+  const cleanValue = value.toString().replace(/[R,\s]/g, '');
+  return parseFloat(cleanValue) || 0;
+};
+
 async function fetchTabCsv(tabName: string) {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${tabName}`;
   const response = await fetch(url);
@@ -185,7 +193,9 @@ export const fetchAllDashboardData = async () => {
   const idxAvgResolution = dIdx.get(["avg resolution time (sec)", "average resolution time", "avg resolution time"]);
   const idxEscalationRate = dIdx.get(["escalation rate"]);
   const idxEscalated = dIdx.get(["escalated tickets", "escalated"]);
-  const idxCheese = dIdx.get(["cheese upsell %", "cheese upsell", "cheese"]);
+  // Indexes for Debonairs Sales and Cheese Sales
+  const idxDebonairsSales = dIdx.get(["debsales", "deb sales", "debonairs", "deb"]);
+  const idxCheeseSales = dIdx.get(["cheese sales", "cheese"]);
 
   dailyV1.slice(1).forEach((row) => {
     const agentName = (row[idxDailyAgent] ?? "").trim();
@@ -198,6 +208,10 @@ export const fetchAllDashboardData = async () => {
 
     const ahtSeconds = parseTimeToSeconds((row[idxAht] ?? "").trim());
     const avgResolutionSeconds = parseTimeToSeconds((row[idxAvgResolution] ?? "").trim());
+    
+    // Parse Debonairs Sales and Cheese Sales (raw values only, no calculation)
+    const debonairsSales = parseMoney(row[idxDebonairsSales] ?? "");
+    const cheeseSales = parseMoney(row[idxCheeseSales] ?? "");
 
     agent.history.push({
       date: normalizeDate((row[idxDailyDate] ?? "").trim()),
@@ -217,8 +231,9 @@ export const fetchAllDashboardData = async () => {
         idxEscalated !== -1
           ? parseInt((row[idxEscalated] ?? "").trim(), 10) || 0
           : undefined,
-      cheeseUpsellPercentage:
-        idxCheese !== -1 ? parseFloat((row[idxCheese] ?? "").trim()) || 0 : 0,
+      // Store raw sales data only - no percentage calculation here
+      debonairsSales: debonairsSales || undefined,
+      cheeseSales: cheeseSales || undefined,
     });
   });
 

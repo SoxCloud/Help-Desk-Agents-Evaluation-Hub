@@ -27,6 +27,8 @@ export interface DailyStats {
   avgResolutionSeconds?: number;
   escalationRate?: number;
   escalatedTickets?: number;
+  debonairsSales?: number;        // Added for Debonairs sales in Rands
+  cheeseSales?: number;           // Added for Cheese upsells in Rands
   cheeseUpsellPercentage?: number;
 }
 
@@ -63,7 +65,7 @@ export interface Agent {
   status: AgentStatus;
   avatarUrl: string;
   history: DailyStats[];
-  evaluations: AgentEval[]; // This uses AgentEval, which is correct
+  evaluations: AgentEval[];
   department?: string;
   shiftStart?: string;
 }
@@ -76,20 +78,6 @@ export interface User {
   avatarUrl: string;
 }
 
-// FIXED: This should match AgentEval structure since that's what you're using
 export interface Evaluation extends AgentEval {
   // This extends AgentEval, so it inherits all its properties
-  // You can add any additional fields specific to Evaluation here if needed
 }
-
-// OR if you don't want to use extends, define it explicitly:
-// export interface Evaluation {
-//   kpis: Kpis;
-//   date: string;
-//   evaluator?: string;
-//   score: number;
-//   positivePoints?: string;
-//   improvementAreas?: string;
-//   comments?: string;
-//   id?: string;
-// }

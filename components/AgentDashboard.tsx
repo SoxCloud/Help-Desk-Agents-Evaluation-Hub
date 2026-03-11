@@ -179,6 +179,20 @@ export const AgentDashboard: React.FC<Props> = ({
       }, 0) / filteredHistory.length / 60).toFixed(1)
     : "0";
 
+  // Calculate cheese upsell for the selected date range using Formula 2
+  const totalDebSales = filteredHistory.reduce(
+    (sum, h) => sum + (h.debonairsSales || 0),
+    0,
+  );
+  const totalCheeseSales = filteredHistory.reduce(
+    (sum, h) => sum + (h.cheeseSales || 0),
+    0,
+  );
+  const baseSales = totalDebSales - totalCheeseSales;
+  const cheeseUpsellPercentage = baseSales > 0
+    ? ((totalCheeseSales / baseSales) * 100).toFixed(1)
+    : "0";
+
   // Update goals with current values
   useEffect(() => {
     setGoals([
@@ -366,7 +380,10 @@ export const AgentDashboard: React.FC<Props> = ({
         currentScore,
         weightedResolutionRate,
         interactions,
-        kpis
+        kpis,
+        debonairsSales: totalDebSales,
+        cheeseSales: totalCheeseSales,
+        cheeseUpsellPercentage: cheeseUpsellPercentage
       },
       evaluations: agent.evaluations
     };
@@ -505,7 +522,7 @@ export const AgentDashboard: React.FC<Props> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main Content Area */}
           <div className="lg:col-span-8 space-y-6">
-            {/* STAT CARDS GRID - UPDATED with Handle Time in minutes */}
+            {/* STAT CARDS GRID - UPDATED with correct Cheese Upsell calculation */}
             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
               <PremiumStatCard
                 title="Calls Handled"
@@ -536,7 +553,6 @@ export const AgentDashboard: React.FC<Props> = ({
                 icon={<Target />}
                 color="from-emerald-500 to-teal-500"
               />
-              {/* UPDATED: Handle Time in minutes */}
               <PremiumStatCard
                 title="Handle Time"
                 value={`${avgHandleTimeMinutes}m`}
@@ -579,19 +595,11 @@ export const AgentDashboard: React.FC<Props> = ({
                 icon={<Award />}
                 color="from-purple-500 to-pink-500"
               />
+              {/* UPDATED: Cheese Upsell using Formula 2 based on date range */}
               <PremiumStatCard
                 title="Cheese Upsell"
-                value={
-                  filteredHistory.length > 0
-                    ? `${(
-                        filteredHistory.reduce(
-                          (s, h) => s + (h.cheeseUpsellPercentage ?? 0),
-                          0,
-                        ) / filteredHistory.length
-                      ).toFixed(1)}%`
-                    : "0%"
-                }
-                sub="conversion rate"
+                value={`${cheeseUpsellPercentage}%`}
+                sub="added to base sales"
                 icon={<Zap />}
                 color="from-amber-500 to-yellow-500"
               />

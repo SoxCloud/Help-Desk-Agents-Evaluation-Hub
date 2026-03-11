@@ -15,6 +15,7 @@ import {
   Star,
   BarChart4,
   Ticket,
+  Zap,
 } from "lucide-react";
 import {
   BarChart,
@@ -173,21 +174,28 @@ export const AdminDashboard: React.FC<Props> = ({
       ? `${Math.round(totalAvgResSeconds / avgResSamples/60).toFixed(1)}m`
       : "0m";
 
-  // Team cheese upsell % (average across all days in range)
-  const totalDays = agentsWithFilteredHistory.reduce(
-    (s, a) => s + a.history.length,
-    0,
-  );
-  const totalCheesePct = agentsWithFilteredHistory.reduce(
+  // Calculate total Debonairs Sales and Cheese Sales for the filtered date range
+  const totalDebSales = agentsWithFilteredHistory.reduce(
     (sum, a) =>
       sum +
-      a.history.reduce((inner, h) => inner + (h.cheeseUpsellPercentage ?? 0), 0),
+      a.history.reduce((inner, h) => inner + (h.debonairsSales || 0), 0),
     0,
   );
-  const avgCheeseUpsell =
-    totalDays > 0 ? (totalCheesePct / totalDays).toFixed(1) : "0";
 
-  // NEW: Calculate average interactions per ticket for the team
+  const totalCheeseSales = agentsWithFilteredHistory.reduce(
+    (sum, a) =>
+      sum +
+      a.history.reduce((inner, h) => inner + (h.cheeseSales || 0), 0),
+    0,
+  );
+
+  // Calculate cheese upsell percentage using Formula 2 for the selected date range
+  const baseSales = totalDebSales - totalCheeseSales;
+  const cheeseUpsellPercentage = baseSales > 0
+    ? ((totalCheeseSales / baseSales) * 100).toFixed(1)
+    : "0";
+
+  // Calculate average interactions per ticket for the team
   const totalTicketsForInteractions = agentsWithFilteredHistory.reduce(
     (sum, a) =>
       sum + a.history.reduce((inner, h) => inner + (h.totalTickets || 0), 0),
@@ -377,12 +385,12 @@ export const AdminDashboard: React.FC<Props> = ({
           icon={<Activity className="text-cyan-400" />}
         />
         
-        {/* UPSELL STATS */}
+        {/* UPSELL STATS - UPDATED with correct calculation */}
         <MetricCard
           title="Cheese upsell %"
-          value={`${avgCheeseUpsell}%`}
-          change="Avg per day"
-          icon={<Activity className="text-amber-400" />}
+          value={`${cheeseUpsellPercentage}%`}
+          change="Added to base"
+          icon={<Zap className="text-amber-400" />}
         />
       </div>
 
@@ -672,15 +680,21 @@ export const AdminDashboard: React.FC<Props> = ({
                   (s, h) => s + (h.totalTickets || 0),
                   0,
                 );
-                const avgCheese =
-                  agent.history.length > 0
-                    ? (
-                        agent.history.reduce(
-                          (s, h) => s + (h.cheeseUpsellPercentage ?? 0),
-                          0,
-                        ) / agent.history.length
-                      ).toFixed(1)
-                    : "0";
+                
+                // Calculate cheese upsell for this agent in the selected date range
+                const agentDebSales = agent.history.reduce(
+                  (s, h) => s + (h.debonairsSales || 0),
+                  0,
+                );
+                const agentCheeseSales = agent.history.reduce(
+                  (s, h) => s + (h.cheeseSales || 0),
+                  0,
+                );
+                const agentBaseSales = agentDebSales - agentCheeseSales;
+                const agentCheeseUpsell = agentBaseSales > 0
+                  ? ((agentCheeseSales / agentBaseSales) * 100).toFixed(1)
+                  : "0";
+                
                 const latestScore =
                   agent.evaluations.length > 0
                     ? agent.evaluations[agent.evaluations.length - 1]?.score
@@ -767,7 +781,7 @@ export const AdminDashboard: React.FC<Props> = ({
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className="text-sm font-black text-amber-400">
-                      {avgCheese}%
+                      {agentCheeseUpsell}%
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
