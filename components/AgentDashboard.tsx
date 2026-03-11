@@ -57,6 +57,19 @@ export const AgentDashboard: React.FC<Props> = ({
   showToggle,
   onToggleView,
 }) => {
+  // Add null check at the beginning
+  if (!agent) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertCircle className="mx-auto text-red-500 mb-4" size={48} />
+          <h3 className="text-white text-lg font-bold">Agent data not available</h3>
+          <p className="text-slate-400 mt-2">Please try again later</p>
+        </div>
+      </div>
+    );
+  }
+
   const startDate = dateRange.start ? new Date(dateRange.start) : null;
   const endDate = dateRange.end ? new Date(dateRange.end) : null;
   const [coachText, setCoachText] = useState<string | null>(null);
@@ -98,15 +111,16 @@ export const AgentDashboard: React.FC<Props> = ({
     return true;
   };
 
-  const filteredHistory = agent.history.filter((h) => isWithinRange(h.date));
-  const filteredEvaluations = agent.evaluations.filter((e) =>
+  // Safely access history and evaluations with default empty arrays
+  const filteredHistory = (agent.history || []).filter((h) => isWithinRange(h.date));
+  const filteredEvaluations = (agent.evaluations || []).filter((e) =>
     isWithinRange(e.date),
   );
 
   const latestEval =
     filteredEvaluations.length > 0
       ? filteredEvaluations[filteredEvaluations.length - 1]
-      : agent.evaluations[agent.evaluations.length - 1];
+      : (agent.evaluations || [])[agent.evaluations?.length - 1];
 
   const kpis = latestEval?.kpis || {
     capture: 0,
@@ -118,10 +132,10 @@ export const AgentDashboard: React.FC<Props> = ({
   };
   const currentScore = latestEval?.score || 0;
 
-  const totalEvaluations = filteredEvaluations.length || agent.evaluations.length;
+  const totalEvaluations = filteredEvaluations.length || agent.evaluations?.length || 0;
   const totalScore = (filteredEvaluations.length
     ? filteredEvaluations
-    : agent.evaluations
+    : (agent.evaluations || [])
   ).reduce((sum, evalItem) => sum + (evalItem.score || 0), 0);
 
   const totalCalls = filteredHistory.reduce(
@@ -151,14 +165,14 @@ export const AgentDashboard: React.FC<Props> = ({
     totalTickets > 0 ? Math.round((escalatedTickets / totalTickets) * 100) : 0;
 
   // Calculate average KPI score
-  const averageKpiScore = agent.evaluations.length > 0
+  const averageKpiScore = (agent.evaluations || []).length > 0
     ? Math.round(
-        agent.evaluations.reduce((sum, e) => {
+        (agent.evaluations || []).reduce((sum, e) => {
           const kpiSum = (e.kpis.product || 0) + (e.kpis.etiquette || 0) + 
                         (e.kpis.solving || 0) + (e.kpis.upsell || 0) + 
                         (e.kpis.promo || 0) + (e.kpis.capture || 0);
           return sum + (kpiSum / 6);
-        }, 0) / agent.evaluations.length
+        }, 0) / (agent.evaluations || []).length
       )
     : 0;
 
@@ -247,7 +261,7 @@ export const AgentDashboard: React.FC<Props> = ({
 
   // Calculate streak
   const calculateStreak = () => {
-    const sortedDates = agent.history
+    const sortedDates = (agent.history || [])
       .map(h => new Date(h.date))
       .sort((a, b) => b.getTime() - a.getTime());
     
@@ -279,7 +293,6 @@ export const AgentDashboard: React.FC<Props> = ({
     "Legendary! 👑",
     "Record breaker! 🏆"
   ];
-  const streakMessage = streakMessages[Math.min(streak, streakMessages.length - 1)];
 
   // Calculate achievements
   const achievements = [
@@ -287,17 +300,17 @@ export const AgentDashboard: React.FC<Props> = ({
       id: 1, 
       name: '100 Club', 
       icon: <Crown className="text-yellow-400" size={20} />,
-      achieved: (agent.evaluations.filter(e => e.score >= 90).length) >= 3,
+      achieved: ((agent.evaluations || []).filter(e => e.score >= 90).length) >= 3,
       description: '3 evaluations with 90%+ score',
-      progress: Math.min(100, (agent.evaluations.filter(e => e.score >= 90).length / 3) * 100)
+      progress: Math.min(100, ((agent.evaluations || []).filter(e => e.score >= 90).length / 3) * 100)
     },
     { 
       id: 2, 
       name: 'Ticket Master', 
       icon: <Ticket className="text-emerald-400" size={20} />,
-      achieved: agent.history.reduce((sum, h) => sum + (h.solvedTickets || 0), 0) >= 100,
+      achieved: (agent.history || []).reduce((sum, h) => sum + (h.solvedTickets || 0), 0) >= 100,
       description: 'Solve 100 tickets',
-      progress: Math.min(100, (agent.history.reduce((sum, h) => sum + (h.solvedTickets || 0), 0) / 100) * 100)
+      progress: Math.min(100, ((agent.history || []).reduce((sum, h) => sum + (h.solvedTickets || 0), 0) / 100) * 100)
     },
     { 
       id: 3, 
@@ -311,17 +324,17 @@ export const AgentDashboard: React.FC<Props> = ({
       id: 4, 
       name: 'Rising Star', 
       icon: <Rocket className="text-purple-400" size={20} />,
-      achieved: agent.evaluations.length >= 5 && currentScore > 80,
+      achieved: (agent.evaluations || []).length >= 5 && currentScore > 80,
       description: '5+ evals with 80%+ score',
-      progress: Math.min(100, (agent.evaluations.length / 5) * 100)
+      progress: Math.min(100, ((agent.evaluations || []).length / 5) * 100)
     },
     { 
       id: 5, 
       name: 'Consistency King', 
       icon: <Flame className="text-orange-400" size={20} />,
-      achieved: agent.evaluations.length >= 10,
+      achieved: (agent.evaluations || []).length >= 10,
       description: '10+ evaluations completed',
-      progress: Math.min(100, (agent.evaluations.length / 10) * 100)
+      progress: Math.min(100, ((agent.evaluations || []).length / 10) * 100)
     },
     { 
       id: 6, 
@@ -334,7 +347,7 @@ export const AgentDashboard: React.FC<Props> = ({
   ];
 
   // Historical scores for trend
-  const historicalScores = agent.evaluations.slice(-7).map((e, i) => ({
+  const historicalScores = (agent.evaluations || []).slice(-7).map((e, i) => ({
     day: `Day ${i + 1}`,
     score: e.score,
     date: new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -385,7 +398,7 @@ export const AgentDashboard: React.FC<Props> = ({
         cheeseSales: totalCheeseSales,
         cheeseUpsellPercentage: cheeseUpsellPercentage
       },
-      evaluations: agent.evaluations
+      evaluations: agent.evaluations || []
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -522,7 +535,7 @@ export const AgentDashboard: React.FC<Props> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main Content Area */}
           <div className="lg:col-span-8 space-y-6">
-            {/* STAT CARDS GRID - UPDATED with correct Cheese Upsell calculation */}
+            {/* STAT CARDS GRID */}
             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
               <PremiumStatCard
                 title="Calls Handled"
@@ -595,7 +608,6 @@ export const AgentDashboard: React.FC<Props> = ({
                 icon={<Award />}
                 color="from-purple-500 to-pink-500"
               />
-              {/* UPDATED: Cheese Upsell using Formula 2 based on date range */}
               <PremiumStatCard
                 title="Cheese Upsell"
                 value={`${cheeseUpsellPercentage}%`}
@@ -792,7 +804,7 @@ export const AgentDashboard: React.FC<Props> = ({
                   Your KPI Performance
                 </h4>
                 <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded-full">
-                  Based on {agent.evaluations.length} evaluations
+                  Based on {(agent.evaluations || []).length} evaluations
                 </span>
               </div>
               
@@ -837,7 +849,7 @@ export const AgentDashboard: React.FC<Props> = ({
                 Recent Activity
               </h4>
               <div className="space-y-3">
-                {agent.evaluations.slice(-3).map((eval_, i) => (
+                {(agent.evaluations || []).slice(-3).map((eval_, i) => (
                   <div key={i} className="flex items-start gap-3 text-xs border-b border-slate-700/50 pb-3 last:border-0">
                     <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center">
                       <MessageSquare size={12} className="text-indigo-400" />
@@ -850,7 +862,7 @@ export const AgentDashboard: React.FC<Props> = ({
                     </div>
                   </div>
                 ))}
-                {agent.history.slice(-2).map((history, i) => (
+                {filteredHistory.slice(-2).map((history, i) => (
                   <div key={i} className="flex items-start gap-3 text-xs border-b border-slate-700/50 pb-3 last:border-0">
                     <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
                       <PhoneCall size={12} className="text-emerald-400" />
@@ -965,105 +977,103 @@ export const AgentDashboard: React.FC<Props> = ({
             </div>
 
             {/* Weekly Goals */}
-           {/* Weekly Goals - EDITABLE */}
-<div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-indigo-500/30">
-  <div className="flex items-center justify-between mb-4">
-    <h4 className="text-white font-bold flex items-center gap-2">
-      <Target size={18} className="text-indigo-400" />
-      Weekly Goals
-    </h4>
-    <button 
-      onClick={() => setIsEditingGoals(!isEditingGoals)}
-      className="text-[10px] text-indigo-400 hover:text-indigo-300"
-      title={isEditingGoals ? "Save goals" : "Edit your goals"}
-    >
-      {isEditingGoals ? "Save" : "Edit Goals"}
-    </button>
-  </div>
-  
-  <div className="space-y-4">
-    {editableGoals.map((goal) => {
-      const progress = Math.min(100, (goal.current / goal.target) * 100);
-      const isComplete = goal.current >= goal.target;
-      
-      return (
-        <div key={goal.id} className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-400">{goal.name}</span>
-            <div className="flex items-center gap-2">
-              {isEditingGoals ? (
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    value={goal.target}
-                    onChange={(e) => {
-                      const newGoals = editableGoals.map(g => 
-                        g.id === goal.id ? {...g, target: parseInt(e.target.value) || 0} : g
-                      );
-                      setEditableGoals(newGoals);
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-indigo-500/30">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-white font-bold flex items-center gap-2">
+                  <Target size={18} className="text-indigo-400" />
+                  Weekly Goals
+                </h4>
+                <button 
+                  onClick={() => setIsEditingGoals(!isEditingGoals)}
+                  className="text-[10px] text-indigo-400 hover:text-indigo-300"
+                  title={isEditingGoals ? "Save goals" : "Edit your goals"}
+                >
+                  {isEditingGoals ? "Save" : "Edit Goals"}
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {editableGoals.map((goal) => {
+                  const progress = Math.min(100, (goal.current / goal.target) * 100);
+                  const isComplete = goal.current >= goal.target;
+                  
+                  return (
+                    <div key={goal.id} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">{goal.name}</span>
+                        <div className="flex items-center gap-2">
+                          {isEditingGoals ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                value={goal.target}
+                                onChange={(e) => {
+                                  const newGoals = editableGoals.map(g => 
+                                    g.id === goal.id ? {...g, target: parseInt(e.target.value) || 0} : g
+                                  );
+                                  setEditableGoals(newGoals);
+                                }}
+                                className="w-16 bg-slate-700 text-white text-xs rounded px-2 py-1 border border-slate-600"
+                                min="1"
+                              />
+                              <span className="text-slate-400">{goal.unit}</span>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="text-white font-bold">
+                                {goal.current}{goal.unit}
+                              </span>
+                              <span className="text-slate-500">
+                                / {goal.target}{goal.unit}
+                              </span>
+                            </>
+                          )}
+                          {isComplete && !isEditingGoals && (
+                            <span className="text-emerald-400 text-[10px] flex items-center gap-0.5">
+                              ✓ Done
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {!isEditingGoals && (
+                        <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              isComplete ? 'bg-gradient-to-r from-emerald-500 to-green-500' : 'bg-indigo-500'
+                            }`}
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {isEditingGoals && (
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setGoals(editableGoals);
+                      setIsEditingGoals(false);
+                      localStorage.setItem('agentGoals', JSON.stringify(editableGoals));
                     }}
-                    className="w-16 bg-slate-700 text-white text-xs rounded px-2 py-1 border border-slate-600"
-                    min="1"
-                  />
-                  <span className="text-slate-400">{goal.unit}</span>
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold transition-colors"
+                  >
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditableGoals(goals);
+                      setIsEditingGoals(false);
+                    }}
+                    className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-xs font-bold transition-colors"
+                  >
+                    Cancel
+                  </button>
                 </div>
-              ) : (
-                <>
-                  <span className="text-white font-bold">
-                    {goal.current}{goal.unit}
-                  </span>
-                  <span className="text-slate-500">
-                    / {goal.target}{goal.unit}
-                  </span>
-                </>
-              )}
-              {isComplete && !isEditingGoals && (
-                <span className="text-emerald-400 text-[10px] flex items-center gap-0.5">
-                  ✓ Done
-                </span>
               )}
             </div>
-          </div>
-          {!isEditingGoals && (
-            <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all duration-500 ${
-                  isComplete ? 'bg-gradient-to-r from-emerald-500 to-green-500' : 'bg-indigo-500'
-                }`}
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-          )}
-        </div>
-      );
-    })}
-  </div>
-  
-  {isEditingGoals && (
-    <div className="mt-4 flex gap-2">
-      <button
-        onClick={() => {
-          setGoals(editableGoals);
-          setIsEditingGoals(false);
-          // Save to localStorage or backend
-          localStorage.setItem('agentGoals', JSON.stringify(editableGoals));
-        }}
-        className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold transition-colors"
-      >
-        Save Changes
-      </button>
-      <button
-        onClick={() => {
-          setEditableGoals(goals);
-          setIsEditingGoals(false);
-        }}
-        className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-xs font-bold transition-colors"
-      >
-        Cancel
-      </button>
-    </div>
-  )}
-</div>
 
             {/* Achievements */}
             <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-indigo-500/30">
@@ -1113,7 +1123,7 @@ export const AgentDashboard: React.FC<Props> = ({
       ) : (
         /* EVALUATIONS VIEW */
         <div className="grid grid-cols-1 gap-6 animate-in slide-in-from-bottom-6 duration-500">
-          {(filteredEvaluations.length ? filteredEvaluations : agent.evaluations).map((evalItem, idx) => {
+          {(filteredEvaluations.length ? filteredEvaluations : (agent.evaluations || [])).map((evalItem, idx) => {
             const phoneNumber = evalItem.id ? formatPhoneNumber(evalItem.id) : `#${1000 + idx}`;
             
             return (

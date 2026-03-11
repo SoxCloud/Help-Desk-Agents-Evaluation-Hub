@@ -27,8 +27,8 @@ export interface DailyStats {
   avgResolutionSeconds?: number;
   escalationRate?: number;
   escalatedTickets?: number;
-  debonairsSales?: number;        // Added for Debonairs sales in Rands
-  cheeseSales?: number;           // Added for Cheese upsells in Rands
+  debonairsSales?: number;
+  cheeseSales?: number;
   cheeseUpsellPercentage?: number;
 }
 
@@ -78,6 +78,16 @@ export interface User {
   avatarUrl: string;
 }
 
-export interface Evaluation extends AgentEval {
-  // This extends AgentEval, so it inherits all its properties
+export interface ValidUser {
+  email: string;
+  password: string;
+  id: string;
+  name: string;
+  role: UserRole;
+  avatarUrl: string;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
 }
