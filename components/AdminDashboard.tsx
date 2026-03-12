@@ -103,7 +103,7 @@ export const AdminDashboard: React.FC<Props> = ({
       ? (totalTeamScore / totalEvaluatedCalls).toFixed(1)
       : "0";
       
-  // Average handle time across all agents in range
+  // Average handle time - REMOVED but keeping calculation for other uses if needed
   const totalAhtSeconds = agentsWithFilteredHistory.reduce((sum, a) => {
     return (
       sum +
@@ -119,6 +119,7 @@ export const AdminDashboard: React.FC<Props> = ({
     0,
   );
 
+  // Keep calculation but don't display
   const avgHandleTimeMinutes =
     totalAhtSamples > 0
       ? `${Math.round(totalAhtSeconds / totalAhtSamples/60).toFixed(1)}m`
@@ -134,16 +135,15 @@ export const AdminDashboard: React.FC<Props> = ({
       sum + a.history.reduce((inner, h) => inner + (h.solvedTickets || 0), 0),
     0,
   );
-  const totalEscalated = agentsWithFilteredHistory.reduce(
-    (sum, a) =>
-      sum + a.history.reduce((inner, h) => inner + (h.escalatedTickets || 0), 0),
-    0,
-  );
+  
+  // REMOVED escalated tickets
+  // const totalEscalated = agentsWithFilteredHistory.reduce(...);
 
   const weightedResolutionRate =
     totalTickets > 0 ? ((totalSolved / totalTickets) * 100).toFixed(1) : "0";
-  const weightedEscalationRate =
-    totalTickets > 0 ? ((totalEscalated / totalTickets) * 100).toFixed(1) : "0";
+  
+  // REMOVED weightedEscalationRate
+  // const weightedEscalationRate = ...;
 
   const totalInteractions = agentsWithFilteredHistory.reduce(
     (sum, a) =>
@@ -296,8 +296,8 @@ export const AdminDashboard: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Stats Grid - GROUPED by Ticket Stats and Call Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      {/* Stats Grid - REMOVED Escalated Tickets and Avg Handle Time */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
         {/* TICKET STATS GROUP */}
         <MetricCard
           title="Total Tickets"
@@ -306,21 +306,15 @@ export const AdminDashboard: React.FC<Props> = ({
           icon={<Ticket className="text-violet-400" />}
         />
         <MetricCard
-          title="Solved Tickets"
+          title="Solved"
           value={totalSolved}
-          change={`${Math.round((totalSolved/totalTickets)*100)}% of total`}
+          change={`${Math.round((totalSolved/totalTickets)*100)}%`}
           icon={<CheckCircle className="text-emerald-400" />}
         />
         <MetricCard
-          title="Escalated Tickets"
-          value={totalEscalated}
-          change={`${weightedEscalationRate}%`}
-          icon={<Activity className="text-rose-400" />}
-        />
-        <MetricCard
-          title="Resolution Rate"
+          title="Resolution"
           value={`${weightedResolutionRate}%`}
-          change="Success rate"
+          change="Success"
           icon={<Target className="text-emerald-400" />}
         />
         
@@ -332,19 +326,13 @@ export const AdminDashboard: React.FC<Props> = ({
           icon={<PhoneCall className="text-blue-400" />}
         />
         <MetricCard
-          title="Abandoned Calls"
+          title="Abandoned"
           value={totalAbandonedCalls}
           change={`${callAbandonedRate}%`}
           icon={<Activity className="text-rose-400" />}
         />
         <MetricCard
-          title="Avg Handle Time"
-          value={`${avgHandleTimeMinutes}m`}
-          change="Per call"
-          icon={<Clock className="text-orange-400" />}
-        />
-        <MetricCard
-          title="Avg Resolution Time"
+          title="Resolution Time"
           value={avgResolutionTime}
           change="Per ticket"
           icon={<Clock className="text-sky-400" />}
@@ -352,13 +340,13 @@ export const AdminDashboard: React.FC<Props> = ({
         
         {/* EVALUATION STATS */}
         <MetricCard
-          title="Evaluated Recordings"
+          title="Evaluations"
           value={totalEvaluatedCalls}
-          change="Total evals"
+          change="Total"
           icon={<CheckCircle className="text-emerald-400" />}
         />
         <MetricCard
-          title="Team QA Average"
+          title="Team QA"
           value={`${teamAverageScore}%`}
           change="Avg score"
           icon={<Award className="text-purple-400" />}
@@ -373,23 +361,23 @@ export const AdminDashboard: React.FC<Props> = ({
         
         {/* INTERACTION STATS */}
         <MetricCard
-          title="Total Interactions"
+          title="Interactions"
           value={totalInteractions}
-          change="All channels"
+          change="Total"
           icon={<Activity className="text-indigo-400" />}
         />
         <MetricCard
-          title="Avg Interactions/Ticket"
+          title="Int/Ticket"
           value={avgInteractionsPerTicket}
-          change="Per ticket"
+          change="Avg"
           icon={<Activity className="text-cyan-400" />}
         />
         
-        {/* UPSELL STATS - UPDATED with correct calculation */}
+        {/* UPSELL STATS */}
         <MetricCard
-          title="Cheese upsell %"
+          title="Cheese Upsell"
           value={`${cheeseUpsellPercentage}%`}
-          change="Added to base"
+          change="Added"
           icon={<Zap className="text-amber-400" />}
         />
       </div>
@@ -400,7 +388,7 @@ export const AdminDashboard: React.FC<Props> = ({
         <div className="lg:col-span-2 bg-[#1e293b] border border-slate-800 p-6 rounded-2xl">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-white font-semibold flex items-center gap-2">
-              <Activity className="text-indigo-400" size={18} /> Ticket Performance per Agent
+              <Activity className="text-indigo-400" size={18} /> Ticket Performance
             </h3>
             <div className="flex items-center gap-3 text-[10px]">
               <div className="flex items-center gap-1.5">
@@ -442,7 +430,7 @@ export const AdminDashboard: React.FC<Props> = ({
                   tickLine={false}
                   tick={{ fill: '#94a3b8' }}
                   label={{ 
-                    value: 'Number of Tickets', 
+                    value: 'Tickets', 
                     angle: -90, 
                     position: 'insideLeft',
                     style: { fill: '#94a3b8', fontSize: '10px', fontWeight: 'bold' }
@@ -460,8 +448,8 @@ export const AdminDashboard: React.FC<Props> = ({
                   }}
                   labelStyle={{ color: '#94a3b8', fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}
                   formatter={(value: number, name: string) => {
-                    if (name === 'total') return [`${value} tickets`, 'Total Tickets'];
-                    if (name === 'solved') return [`${value} tickets`, 'Solved Tickets'];
+                    if (name === 'total') return [`${value}`, 'Total'];
+                    if (name === 'solved') return [`${value}`, 'Solved'];
                     return [value, name];
                   }}
                 />
@@ -486,19 +474,19 @@ export const AdminDashboard: React.FC<Props> = ({
           {/* Summary Stats */}
           <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-slate-800">
             <div className="text-center">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Tickets</p>
+              <p className="text-[10px] font-bold text-slate-500">Total</p>
               <p className="text-lg font-black text-white">
                 {chartData.reduce((sum, item) => sum + (item.total || 0), 0)}
               </p>
             </div>
             <div className="text-center">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Solved</p>
+              <p className="text-[10px] font-bold text-slate-500">Solved</p>
               <p className="text-lg font-black text-emerald-400">
                 {chartData.reduce((sum, item) => sum + (item.solved || 0), 0)}
               </p>
             </div>
             <div className="text-center">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Resolution Rate</p>
+              <p className="text-[10px] font-bold text-slate-500">Rate</p>
               <p className="text-lg font-black text-indigo-400">
                 {(() => {
                   const total = chartData.reduce((sum, item) => sum + (item.total || 0), 0);
@@ -527,12 +515,10 @@ export const AdminDashboard: React.FC<Props> = ({
           </div>
           <div className="grid grid-cols-2 gap-4 mt-8 w-full text-[10px] font-bold uppercase tracking-wider">
             <div className="flex items-center justify-center gap-2 text-slate-400 bg-slate-900/50 py-2 rounded-lg">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>{" "}
-              Online
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Online
             </div>
             <div className="flex items-center justify-center gap-2 text-slate-400 bg-slate-900/50 py-2 rounded-lg">
-              <span className="w-2 h-2 rounded-full bg-orange-500"></span> On
-              Call
+              <span className="w-2 h-2 rounded-full bg-orange-500"></span> On Call
             </div>
           </div>
         </div>
@@ -544,95 +530,56 @@ export const AdminDashboard: React.FC<Props> = ({
           <div className="p-2 bg-indigo-600/20 rounded-xl">
             <Award className="text-indigo-400" size={20} />
           </div>
-          <h3 className="text-white font-bold text-lg">Team Performance Metrics</h3>
+          <h3 className="text-white font-bold text-lg">Team KPI</h3>
           <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded-full">
-            Based on {kpiAverages.totalEvals} evaluations
+            {kpiAverages.totalEvals} evals
           </span>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <KPICard
-            label="Product Knowledge"
+            label="Product"
             value={kpiAverages.product}
             icon={<Brain className="text-blue-400" size={18} />}
             color="from-blue-500 to-blue-600"
           />
           <KPICard
-            label="Phone Etiquette"
+            label="Etiquette"
             value={kpiAverages.etiquette}
             icon={<PhoneCall className="text-indigo-400" size={18} />}
             color="from-indigo-500 to-indigo-600"
           />
           <KPICard
-            label="Problem Solving"
+            label="Problem"
             value={kpiAverages.solving}
             icon={<Target className="text-purple-400" size={18} />}
             color="from-purple-500 to-purple-600"
           />
           <KPICard
-            label="Upselling"
+            label="Upsell"
             value={kpiAverages.upsell}
             icon={<TrendingUp className="text-emerald-400" size={18} />}
             color="from-emerald-500 to-emerald-600"
           />
           <KPICard
-            label="Promotion"
+            label="Promo"
             value={kpiAverages.promo}
             icon={<Star className="text-amber-400" size={18} />}
             color="from-amber-500 to-amber-600"
           />
           <KPICard
-            label="Info Capture"
+            label="Capture"
             value={kpiAverages.capture}
             icon={<CheckCircle className="text-rose-400" size={18} />}
             color="from-rose-500 to-rose-600"
           />
-        </div>
-
-        {/* Performance Summary */}
-        <div className="mt-6 pt-4 border-t border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-slate-800/50 rounded-xl p-3">
-            <p className="text-[10px] text-slate-400">Top Performing KPI</p>
-            <p className="text-sm font-bold text-white">
-              {Object.entries({
-                'Product Knowledge': kpiAverages.product,
-                'Phone Etiquette': kpiAverages.etiquette,
-                'Problem Solving': kpiAverages.solving,
-                'Upselling': kpiAverages.upsell,
-                'Promotion': kpiAverages.promo,
-                'Info Capture': kpiAverages.capture,
-              }).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'}
-            </p>
-          </div>
-          <div className="bg-slate-800/50 rounded-xl p-3">
-            <p className="text-[10px] text-slate-400">KPI Needing Improvement</p>
-            <p className="text-sm font-bold text-white">
-              {Object.entries({
-                'Product Knowledge': kpiAverages.product,
-                'Phone Etiquette': kpiAverages.etiquette,
-                'Problem Solving': kpiAverages.solving,
-                'Upselling': kpiAverages.upsell,
-                'Promotion': kpiAverages.promo,
-                'Info Capture': kpiAverages.capture,
-              }).sort((a, b) => a[1] - b[1])[0]?.[0] || 'N/A'}
-            </p>
-          </div>
-          <div className="bg-slate-800/50 rounded-xl p-3">
-            <p className="text-[10px] text-slate-400">Overall Average</p>
-            <p className="text-sm font-bold text-white">
-              {Math.round(
-                (kpiAverages.product + kpiAverages.etiquette + kpiAverages.solving + 
-                 kpiAverages.upsell + kpiAverages.promo + kpiAverages.capture) / 6
-              )}%
-            </p>
-          </div>
         </div>
       </div>
 
       {/* Agent Performance Table */}
       <div className="bg-[#1e293b] border border-slate-800 rounded-2xl overflow-hidden">
         <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/20">
-          <h3 className="text-white font-semibold">Agent Performance Table</h3>
+          <h3 className="text-white font-semibold">Agents</h3>
           <div className="relative">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
@@ -640,10 +587,10 @@ export const AdminDashboard: React.FC<Props> = ({
             />
             <input
               type="text"
-              placeholder="Search agents..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-slate-900 border border-slate-700 rounded-xl py-2 pl-10 pr-4 text-xs text-white focus:border-indigo-500 outline-none w-64 transition-all"
+              className="bg-slate-900 border border-slate-700 rounded-xl py-2 pl-10 pr-4 text-xs text-white focus:border-indigo-500 outline-none w-48 md:w-64 transition-all"
             />
           </div>
         </div>
@@ -651,15 +598,14 @@ export const AdminDashboard: React.FC<Props> = ({
           <table className="w-full text-left">
             <thead className="bg-slate-900/50 text-[10px] uppercase font-black text-slate-500 tracking-widest">
               <tr>
-                <th className="px-6 py-4">Agent Name</th>
-                <th className="px-6 py-4">Current Status</th>
-                <th className="px-6 py-4 text-center">Answered</th>
-                <th className="px-6 py-4 text-center">Abandoned %</th>
-                <th className="px-6 py-4 text-center">Tickets</th>
-                <th className="px-6 py-4 text-center">Avg Int/Tkt</th>
+                <th className="px-6 py-4">Agent</th>
+                <th className="px-6 py-4 text-center">Ans</th>
+                <th className="px-6 py-4 text-center">Abn%</th>
+                <th className="px-6 py-4 text-center">Tkts</th>
+                <th className="px-6 py-4 text-center">Int/Tkt</th>
                 <th className="px-6 py-4 text-center">CSAT</th>
-                <th className="px-6 py-4 text-center">KPI Score</th>
-                <th className="px-6 py-4 text-center">Cheese %</th>
+                <th className="px-6 py-4 text-center">KPI</th>
+                <th className="px-6 py-4 text-center">Cheese</th>
                 <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
@@ -681,7 +627,7 @@ export const AdminDashboard: React.FC<Props> = ({
                   0,
                 );
                 
-                // Calculate cheese upsell for this agent in the selected date range
+                // Calculate cheese upsell for this agent
                 const agentDebSales = agent.history.reduce(
                   (s, h) => s + (h.debonairsSales || 0),
                   0,
@@ -717,12 +663,8 @@ export const AdminDashboard: React.FC<Props> = ({
                   (s, h) => s + (h.interactions || 0),
                   0,
                 );
-                const agentTotalTickets = agent.history.reduce(
-                  (s, h) => s + (h.totalTickets || 0),
-                  0,
-                );
-                const agentAvgInteractions = agentTotalTickets > 0
-                  ? (agentTotalInteractions / agentTotalTickets).toFixed(1)
+                const agentAvgInteractions = totalTickets > 0
+                  ? (agentTotalInteractions / totalTickets).toFixed(1)
                   : "0";
                 
                 return (
@@ -730,49 +672,45 @@ export const AdminDashboard: React.FC<Props> = ({
                   key={agent.id}
                   className="hover:bg-indigo-500/5 transition-colors group"
                 >
-                  <td className="px-6 py-4 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-slate-700 to-slate-600 flex items-center justify-center text-[11px] font-black text-white shadow-inner">
-                      {agent.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </div>
-                    <span className="text-sm font-bold text-slate-200">
-                      {agent.name}
-                    </span>
-                  </td>
                   <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-slate-900/80 border border-slate-800 rounded-full text-[10px] font-bold text-slate-500 flex items-center w-fit gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>{" "}
-                      Offline
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-slate-700 to-slate-600 flex items-center justify-center text-[10px] font-black text-white shadow-inner flex-shrink-0">
+                        {agent.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </div>
+                      <span className="text-xs font-bold text-slate-200 truncate max-w-[100px]">
+                        {agent.name.split(' ')[0]}
+                      </span>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-sm font-black text-slate-300 text-center">
+                  <td className="px-6 py-4 text-xs font-black text-slate-300 text-center">
                     {totalAnswered}
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className={`text-sm font-black ${
+                    <span className={`text-xs font-black ${
                       parseFloat(abandonedRate) > 5 ? 'text-rose-400' : 
                       parseFloat(abandonedRate) > 2 ? 'text-amber-400' : 'text-emerald-400'
                     }`}>
                       {abandonedRate}%
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm font-black text-slate-300 text-center">
+                  <td className="px-6 py-4 text-xs font-black text-slate-300 text-center">
                     {totalTickets}
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className="text-sm font-black text-cyan-400">
+                    <span className="text-xs font-black text-cyan-400">
                       {agentAvgInteractions}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className="text-sm font-black text-indigo-400">
+                    <span className="text-xs font-black text-indigo-400">
                       {latestScore}%
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className={`text-sm font-black ${
+                    <span className={`text-xs font-black ${
                       agentKpiAvg >= 80 ? 'text-emerald-400' : 
                       agentKpiAvg >= 60 ? 'text-amber-400' : 'text-rose-400'
                     }`}>
@@ -780,16 +718,16 @@ export const AdminDashboard: React.FC<Props> = ({
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className="text-sm font-black text-amber-400">
+                    <span className="text-xs font-black text-amber-400">
                       {agentCheeseUpsell}%
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => onViewAgent(agent.id)}
-                      className="bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
+                      className="bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white px-3 py-1 rounded-lg text-[10px] font-bold transition-all"
                     >
-                      View Stats
+                      View
                     </button>
                   </td>
                 </tr>
@@ -803,41 +741,42 @@ export const AdminDashboard: React.FC<Props> = ({
   );
 };
 
+// MetricCard component
 const MetricCard = ({ title, value, change, icon }: any) => (
-  <div className="bg-[#1e293b] border border-slate-800 p-5 rounded-2xl relative overflow-hidden group hover:border-indigo-500/50 transition-all">
-    <div className="flex justify-between items-start gap-3">
-      <div className="min-w-0">
-        <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-2 truncate">
+  <div className="bg-[#1e293b] border border-slate-800 p-4 rounded-2xl relative overflow-hidden group hover:border-indigo-500/50 transition-all">
+    <div className="flex justify-between items-start gap-2">
+      <div className="min-w-0 flex-1">
+        <p className="text-[9px] uppercase font-bold text-slate-500 tracking-widest mb-1 truncate" title={title}>
           {title}
         </p>
-        <div className="flex flex-wrap items-end gap-x-2 gap-y-1">
-          <span className="text-2xl md:text-3xl font-black text-white leading-none">
+        <div className="flex flex-wrap items-end gap-x-1 gap-y-1">
+          <span className="text-xl md:text-2xl font-black text-white leading-none">
             {value}
           </span>
           {change && (
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap bg-emerald-500/10 text-emerald-500">
+            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap bg-emerald-500/10 text-emerald-500">
               {change}
             </span>
           )}
         </div>
       </div>
-      <div className="shrink-0 p-2.5 bg-slate-900 rounded-xl border border-slate-800 text-indigo-400 group-hover:scale-110 transition-transform">
-        {icon}
+      <div className="shrink-0 p-2 bg-slate-900 rounded-xl border border-slate-800 text-indigo-400 group-hover:scale-110 transition-transform">
+        {React.cloneElement(icon, { size: 18 })}
       </div>
     </div>
   </div>
 );
 
 const KPICard = ({ label, value, icon, color }: any) => (
-  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-indigo-500/50 transition-all group">
-    <div className="flex items-center justify-between mb-3">
-      <div className={`p-2 rounded-lg bg-gradient-to-br ${color} bg-opacity-20`}>
-        {icon}
+  <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700 hover:border-indigo-500/50 transition-all group">
+    <div className="flex items-center justify-between mb-2">
+      <div className={`p-1.5 rounded-lg bg-gradient-to-br ${color} bg-opacity-20`}>
+        {React.cloneElement(icon, { size: 16 })}
       </div>
-      <span className="text-xl font-black text-white">{value}%</span>
+      <span className="text-base font-black text-white">{value}%</span>
     </div>
-    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
-    <div className="mt-2 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate" title={label}>{label}</p>
+    <div className="mt-2 h-1 bg-slate-700 rounded-full overflow-hidden">
       <div 
         className={`h-full rounded-full bg-gradient-to-r ${color}`}
         style={{ width: `${value}%` }}

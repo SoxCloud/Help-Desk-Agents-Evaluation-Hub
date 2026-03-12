@@ -13,7 +13,8 @@ import {
   CheckCircle,
   AlertCircle,
   PieChart,
-  LineChart
+  LineChart,
+  Zap,
 } from 'lucide-react';
 import {
   BarChart,
@@ -46,6 +47,17 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
       curr.history.reduce((inner, h) => inner + (h.answeredCalls || 0), 0),
     0,
   );
+
+  const totalAbandonedCalls = agents.reduce(
+    (acc, curr) =>
+      acc +
+      curr.history.reduce((inner, h) => inner + (h.abandonedCalls || 0), 0),
+    0,
+  );
+
+  const callAbandonedRate = totalCalls > 0
+    ? Math.round((totalAbandonedCalls / totalCalls) * 100)
+    : 0;
 
   const allEvaluations = agents.flatMap((a) => a.evaluations);
   const avgQA =
@@ -93,6 +105,10 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
     0,
   );
 
+  const avgInteractionsPerTicket = totalTickets > 0
+    ? (totalInteractions / totalTickets).toFixed(1)
+    : "0";
+
   const totalAhtSeconds = agents.reduce(
     (acc, curr) =>
       acc +
@@ -107,16 +123,28 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
   );
   const totalDays = agents.reduce((acc, curr) => acc + curr.history.length, 0);
 
-  const avgAht = totalDays > 0 ? `${Math.round(totalAhtSeconds / totalDays)}s` : "0s";
-  const avgResTime = totalDays > 0 ? `${Math.round(totalResSeconds / totalDays)}s` : "0s";
+  const avgAht = totalDays > 0 ? `${Math.round(totalAhtSeconds / totalDays / 60)}m` : "0m";
+  const avgResTime = totalDays > 0 ? `${Math.round(totalResSeconds / totalDays / 60)}m` : "0m";
 
-  const totalCheesePct = agents.reduce(
+  // Calculate cheese upsell totals
+  const totalDebSales = agents.reduce(
     (acc, curr) =>
       acc +
-      curr.history.reduce((inner, h) => inner + (h.cheeseUpsellPercentage || 0), 0),
+      curr.history.reduce((inner, h) => inner + (h.debonairsSales || 0), 0),
     0,
   );
-  const avgCheeseUpsell = totalDays > 0 ? (totalCheesePct / totalDays).toFixed(1) : "0";
+
+  const totalCheeseSales = agents.reduce(
+    (acc, curr) =>
+      acc +
+      curr.history.reduce((inner, h) => inner + (h.cheeseSales || 0), 0),
+    0,
+  );
+
+  const baseSales = totalDebSales - totalCheeseSales;
+  const cheeseUpsellPercentage = baseSales > 0
+    ? ((totalCheeseSales / baseSales) * 100).toFixed(1)
+    : "0";
 
   // CHART 1: Ticket Performance by Agent
   const ticketChartData = agents.map((agent) => {
@@ -139,7 +167,7 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
   const callChartData = agents.map((agent) => {
     const calls = agent.history.reduce((inner, h) => inner + (h.answeredCalls || 0), 0);
     const aht = agent.history.length > 0 
-      ? Math.round(agent.history.reduce((inner, h) => inner + (h.ahtSeconds || 0), 0) / agent.history.length)
+      ? Math.round(agent.history.reduce((inner, h) => inner + (h.ahtSeconds || 0), 0) / agent.history.length / 60)
       : 0;
     
     return {
@@ -154,11 +182,15 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
   // CHART 3: Monthly Trends (simulated from history)
   const monthlyData = () => {
     const monthMap = new Map();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
     agents.forEach(agent => {
       agent.history.forEach(day => {
         if (day.date) {
-          const month = day.date.substring(0, 7); // YYYY-MM
+          const date = new Date(day.date);
+          const monthIndex = date.getMonth();
+          const month = months[monthIndex];
+          
           if (!monthMap.has(month)) {
             monthMap.set(month, { 
               month, 
@@ -177,7 +209,10 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
       });
     });
     
-    return Array.from(monthMap.values()).sort((a, b) => a.month.localeCompare(b.month));
+    // Ensure all months are present in order
+    return months.map(month => 
+      monthMap.get(month) || { month, calls: 0, tickets: 0, solved: 0, escalated: 0 }
+    );
   };
 
   const trendData = monthlyData();
@@ -234,12 +269,10 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
     .sort((a, b) => (b.latestEval!.score || 0) - (a.latestEval!.score || 0))
     .slice(0, 5);
 
-  const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#64748b', '#8b5cf6'];
-
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* HEADER SECTION */}
-      <div className="relative overflow-hidden bg-[#1e293b]/40 border border-slate-800 p-8 rounded-[2rem] backdrop-blur-md">
+      {/* HEADER SECTION - Updated to match Agent Roster */}
+      <div className="relative overflow-hidden bg-[#1e293b] border border-slate-800 p-8 rounded-[2rem] shadow-lg">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 blur-[100px] -mr-32 -mt-32"></div>
         <div className="relative flex items-center justify-between">
           <div>
@@ -256,7 +289,7 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
         </div>
       </div>
 
-      {/* METRIC GRID */}
+      {/* METRIC GRID - Updated with proper text colors */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-6">
         <StatCard title="Total Team Calls" value={totalCalls} subText="All answered calls" icon={<Users/>} color="text-blue-400" />
         <StatCard title="Total Tickets" value={totalTickets} subText="All tickets" icon={<Ticket/>} color="text-violet-400" />
@@ -264,16 +297,17 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
         <StatCard title="Avg Handle Time" value={avgAht} subText="Across all days" icon={<Clock/>} color="text-orange-400" />
         <StatCard title="Avg Resolution Time" value={avgResTime} subText="Across all days" icon={<Clock/>} color="text-sky-400" />
         <StatCard title="Resolution Rate" value={`${avgResolutionRate}%`} subText="Weighted" icon={<TrendingUp/>} color="text-emerald-400" />
-        <StatCard title="Escalation Rate" value={`${avgEscalationRate}%`} subText="Weighted" icon={<Activity/>} color="text-rose-400" />
+        <StatCard title="Abandoned Rate" value={`${callAbandonedRate}%`} subText="Of total calls" icon={<AlertCircle/>} color="text-rose-400" />
         <StatCard title="Interactions" value={totalInteractions} subText="All channels" icon={<Activity/>} color="text-indigo-400" />
-        <StatCard title="Cheese Upsell" value={`${avgCheeseUpsell}%`} subText="Avg per day" icon={<Activity/>} color="text-amber-400" />
+        <StatCard title="Cheese Upsell" value={`${cheeseUpsellPercentage}%`} subText="Added to base" icon={<Zap/>} color="text-amber-400" />
+        <StatCard title="Avg Int/Ticket" value={avgInteractionsPerTicket} subText="Per ticket" icon={<Activity/>} color="text-cyan-400" />
         <StatCard title="Solved Tickets" value={totalSolved} subText={`${Math.round((totalSolved/totalTickets)*100)}% of total`} icon={<CheckCircle/>} color="text-emerald-400" />
       </div>
 
       {/* CHARTS ROW 1: Ticket Performance and Call Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Ticket Performance Chart */}
-        <div className="bg-[#1e293b]/40 border border-slate-800 p-6 rounded-[2rem]">
+        <div className="bg-[#1e293b] border border-slate-800 p-6 rounded-[2rem] shadow-lg">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-white font-black text-sm uppercase tracking-widest flex items-center gap-2">
               <Ticket size={16} className="text-indigo-500"/> Ticket Performance by Agent
@@ -295,15 +329,16 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                 <XAxis 
                   dataKey="name" 
-                  stroke="#64748b" 
+                  stroke="#94a3b8" 
                   fontSize={10} 
                   axisLine={false} 
                   tickLine={false}
                   angle={-45}
                   textAnchor="end"
                   height={50}
+                  tick={{ fill: '#94a3b8' }}
                 />
-                <YAxis stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
                 <Tooltip 
                   cursor={{ fill: '#1e293b' }}
                   contentStyle={{ 
@@ -318,7 +353,7 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
                     return [value, name];
                   }}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ color: '#94a3b8' }} />
                 <Bar dataKey="total" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={20} />
                 <Bar dataKey="solved" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
               </BarChart>
@@ -327,7 +362,7 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
         </div>
 
         {/* Call Performance Chart */}
-        <div className="bg-[#1e293b]/40 border border-slate-800 p-6 rounded-[2rem]">
+        <div className="bg-[#1e293b] border border-slate-800 p-6 rounded-[2rem] shadow-lg">
           <h3 className="text-white font-black text-sm uppercase tracking-widest mb-6 flex items-center gap-2">
             <PhoneCall size={16} className="text-indigo-500"/> Call Volume by Agent
           </h3>
@@ -337,15 +372,16 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                 <XAxis 
                   dataKey="name" 
-                  stroke="#64748b" 
+                  stroke="#94a3b8" 
                   fontSize={10} 
                   axisLine={false} 
                   tickLine={false}
                   angle={-45}
                   textAnchor="end"
                   height={50}
+                  tick={{ fill: '#94a3b8' }}
                 />
-                <YAxis stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
                 <Tooltip 
                   cursor={{ fill: '#1e293b' }}
                   contentStyle={{ 
@@ -360,14 +396,14 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
             </ResponsiveContainer>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-4">
-            <div className="bg-slate-900/50 rounded-xl p-3 text-center">
-              <p className="text-[10px] text-slate-500 font-bold">Avg Calls/Agent</p>
+            <div className="bg-slate-800/50 rounded-xl p-3 text-center border border-slate-700">
+              <p className="text-[10px] text-slate-400 font-bold">Avg Calls/Agent</p>
               <p className="text-xl font-black text-white">
                 {Math.round(totalCalls / agents.length)}
               </p>
             </div>
-            <div className="bg-slate-900/50 rounded-xl p-3 text-center">
-              <p className="text-[10px] text-slate-500 font-bold">Busiest Agent</p>
+            <div className="bg-slate-800/50 rounded-xl p-3 text-center border border-slate-700">
+              <p className="text-[10px] text-slate-400 font-bold">Busiest Agent</p>
               <p className="text-sm font-black text-indigo-400 truncate">
                 {callChartData[0]?.name || 'N/A'}
               </p>
@@ -376,10 +412,10 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
         </div>
       </div>
 
-      {/* CHARTS ROW 2: Monthly Trends and Resolution Distribution */}
+      {/* CHARTS ROW 2: Monthly Trends and Ticket Status Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly Trends */}
-        <div className="bg-[#1e293b]/40 border border-slate-800 p-6 rounded-[2rem]">
+        <div className="bg-[#1e293b] border border-slate-800 p-6 rounded-[2rem] shadow-lg">
           <h3 className="text-white font-black text-sm uppercase tracking-widest mb-6 flex items-center gap-2">
             <LineChart size={16} className="text-indigo-500"/> Monthly Performance Trends
           </h3>
@@ -389,17 +425,14 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                 <XAxis 
                   dataKey="month" 
-                  stroke="#64748b" 
+                  stroke="#94a3b8" 
                   fontSize={10} 
                   axisLine={false} 
                   tickLine={false}
-                  tickFormatter={(value) => {
-                    const [year, month] = value.split('-');
-                    return `${month}/${year.substring(2)}`;
-                  }}
+                  tick={{ fill: '#94a3b8' }}
                 />
-                <YAxis yAxisId="left" stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="left" stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
+                <YAxis yAxisId="right" orientation="right" stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: '#1e293b', 
@@ -408,7 +441,7 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
                     color: '#fff'
                   }}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ color: '#94a3b8' }} />
                 <Bar yAxisId="left" dataKey="tickets" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={20} name="Tickets" />
                 <Line yAxisId="right" type="monotone" dataKey="calls" stroke="#10b981" strokeWidth={2} name="Calls" />
                 <Line yAxisId="right" type="monotone" dataKey="solved" stroke="#f59e0b" strokeWidth={2} name="Solved" />
@@ -418,7 +451,7 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
         </div>
 
         {/* Ticket Status Distribution */}
-        <div className="bg-[#1e293b]/40 border border-slate-800 p-6 rounded-[2rem]">
+        <div className="bg-[#1e293b] border border-slate-800 p-6 rounded-[2rem] shadow-lg">
           <h3 className="text-white font-black text-sm uppercase tracking-widest mb-6 flex items-center gap-2">
             <PieChart size={16} className="text-indigo-500"/> Ticket Status Distribution
           </h3>
@@ -469,7 +502,7 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
       {/* CHARTS ROW 3: Resolution Rate Distribution and AHT Analysis */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Resolution Rate Distribution */}
-        <div className="bg-[#1e293b]/40 border border-slate-800 p-6 rounded-[2rem]">
+        <div className="bg-[#1e293b] border border-slate-800 p-6 rounded-[2rem] shadow-lg">
           <h3 className="text-white font-black text-sm uppercase tracking-widest mb-6 flex items-center gap-2">
             <Award size={16} className="text-indigo-500"/> Resolution Rate Distribution
           </h3>
@@ -514,7 +547,7 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
         </div>
 
         {/* AHT Analysis */}
-        <div className="bg-[#1e293b]/40 border border-slate-800 p-6 rounded-[2rem]">
+        <div className="bg-[#1e293b] border border-slate-800 p-6 rounded-[2rem] shadow-lg">
           <h3 className="text-white font-black text-sm uppercase tracking-widest mb-6 flex items-center gap-2">
             <Clock size={16} className="text-indigo-500"/> Average Handle Time (AHT) by Agent
           </h3>
@@ -522,15 +555,16 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={callChartData} margin={{ top: 20, right: 30, left: 20, bottom: 30 }} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-                <XAxis type="number" stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} unit="s" />
+                <XAxis type="number" stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} unit="m" tick={{ fill: '#94a3b8' }} />
                 <YAxis 
                   type="category" 
                   dataKey="name" 
-                  stroke="#64748b" 
+                  stroke="#94a3b8" 
                   fontSize={10} 
                   axisLine={false} 
                   tickLine={false}
                   width={60}
+                  tick={{ fill: '#94a3b8' }}
                 />
                 <Tooltip 
                   cursor={{ fill: '#1e293b' }}
@@ -540,45 +574,45 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
                     borderRadius: '8px',
                     color: '#fff'
                   }}
-                  formatter={(value: number) => [`${value}s`, 'Avg Handle Time']}
+                  formatter={(value: number) => [`${value}m`, 'Avg Handle Time']}
                 />
                 <Bar dataKey="aht" fill="#f59e0b" radius={[0, 4, 4, 0]} barSize={15} />
               </BarChart>
             </ResponsiveContainer>
           </div>
           <div className="mt-4 text-center">
-            <p className="text-[10px] text-slate-500">Team Average AHT: <span className="text-white font-bold">{avgAht}</span></p>
+            <p className="text-[10px] text-slate-400">Team Average AHT: <span className="text-white font-bold">{avgAht}</span></p>
           </div>
         </div>
       </div>
 
       {/* Top Performers Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-12 bg-[#1e293b]/40 border border-slate-800 p-8 rounded-[2rem]">
+        <div className="lg:col-span-12 bg-[#1e293b] border border-slate-800 p-8 rounded-[2rem] shadow-lg">
           <h3 className="text-white font-black text-sm uppercase tracking-widest mb-6">Top Performing Agents</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {topAgents.map(({ agent, latestEval, totalAgentCalls, totalAgentTickets, resolutionRate }, i) => (
-              <div key={i} className="bg-gradient-to-br from-slate-900 to-slate-800/50 rounded-2xl p-5 border border-slate-700/50 hover:border-indigo-500/30 transition-all">
+              <div key={i} className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-2xl p-5 border border-slate-700 hover:border-indigo-500/50 transition-all">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-black text-sm">
                     #{i + 1}
                   </div>
                   <div>
                     <p className="text-sm font-bold text-white">{agent.name}</p>
-                    <p className="text-[9px] text-slate-500 font-black uppercase">{totalAgentCalls} Calls</p>
+                    <p className="text-[9px] text-slate-400 font-black uppercase">{totalAgentCalls} Calls</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-center">
-                  <div className="bg-slate-900/80 rounded-xl p-2">
-                    <p className="text-[8px] text-slate-500">QA Score</p>
+                  <div className="bg-slate-800/80 rounded-xl p-2 border border-slate-700">
+                    <p className="text-[8px] text-slate-400">QA Score</p>
                     <p className="text-sm font-black text-emerald-400">{latestEval?.score}%</p>
                   </div>
-                  <div className="bg-slate-900/80 rounded-xl p-2">
-                    <p className="text-[8px] text-slate-500">Tickets</p>
+                  <div className="bg-slate-800/80 rounded-xl p-2 border border-slate-700">
+                    <p className="text-[8px] text-slate-400">Tickets</p>
                     <p className="text-sm font-black text-indigo-400">{totalAgentTickets}</p>
                   </div>
-                  <div className="bg-slate-900/80 rounded-xl p-2 col-span-2">
-                    <p className="text-[8px] text-slate-500">Resolution Rate</p>
+                  <div className="bg-slate-800/80 rounded-xl p-2 col-span-2 border border-slate-700">
+                    <p className="text-[8px] text-slate-400">Resolution Rate</p>
                     <p className="text-sm font-black text-amber-400">{resolutionRate}%</p>
                   </div>
                 </div>
@@ -589,33 +623,31 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
       </div>
 
       {/* Agent Performance Table */}
-      <div className="bg-[#1e293b]/40 border border-slate-800 rounded-[2rem] overflow-hidden">
+      <div className="bg-[#1e293b] border border-slate-800 rounded-[2rem] overflow-hidden shadow-lg">
         <div className="p-6 border-b border-slate-800">
           <h3 className="text-white font-black text-sm uppercase tracking-widest">Agent Performance Details</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-slate-900/50 text-[10px] uppercase font-black text-slate-500 tracking-widest">
+            <thead className="bg-slate-800/50 text-[10px] uppercase font-black text-slate-400 tracking-widest">
               <tr>
                 <th className="px-6 py-4">Agent</th>
                 <th className="px-6 py-4 text-center">Calls</th>
-                <th className="px-6 py-4 text-center">Total Tickets</th>
+                <th className="px-6 py-4 text-center">Tickets</th>
                 <th className="px-6 py-4 text-center">Solved</th>
-                <th className="px-6 py-4 text-center">Escalated</th>
-                <th className="px-6 py-4 text-center">Resolution Rate</th>
+                <th className="px-6 py-4 text-center">Resolution</th>
                 <th className="px-6 py-4 text-center">AHT</th>
                 <th className="px-6 py-4 text-center">QA Score</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="divide-y divide-slate-800">
               {agents.map((agent) => {
                 const calls = agent.history.reduce((s, h) => s + (h.answeredCalls || 0), 0);
                 const tickets = agent.history.reduce((s, h) => s + (h.totalTickets || 0), 0);
                 const solved = agent.history.reduce((s, h) => s + (h.solvedTickets || 0), 0);
-                const escalated = agent.history.reduce((s, h) => s + (h.escalatedTickets || 0), 0);
                 const resolutionRate = tickets > 0 ? Math.round((solved / tickets) * 100) : 0;
                 const aht = agent.history.length > 0 
-                  ? Math.round(agent.history.reduce((s, h) => s + (h.ahtSeconds || 0), 0) / agent.history.length)
+                  ? Math.round(agent.history.reduce((s, h) => s + (h.ahtSeconds || 0), 0) / agent.history.length / 60)
                   : 0;
                 const latestScore = agent.evaluations.length > 0 
                   ? agent.evaluations[agent.evaluations.length - 1]?.score 
@@ -634,7 +666,6 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
                     <td className="px-6 py-4 text-center font-bold text-blue-400">{calls}</td>
                     <td className="px-6 py-4 text-center font-bold text-indigo-400">{tickets}</td>
                     <td className="px-6 py-4 text-center font-bold text-emerald-400">{solved}</td>
-                    <td className="px-6 py-4 text-center font-bold text-amber-400">{escalated}</td>
                     <td className="px-6 py-4 text-center">
                       <span className={`font-bold ${
                         resolutionRate >= 90 ? 'text-emerald-400' : 
@@ -644,7 +675,7 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
                         {resolutionRate}%
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center font-bold text-orange-400">{aht}s</td>
+                    <td className="px-6 py-4 text-center font-bold text-orange-400">{aht}m</td>
                     <td className="px-6 py-4 text-center font-bold text-purple-400">{latestScore}%</td>
                   </tr>
                 );
