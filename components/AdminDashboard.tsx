@@ -337,12 +337,6 @@ export const AdminDashboard: React.FC<Props> = ({
           change={`${callAbandonedRate}%`}
           icon={<Activity className="text-rose-400" />}
         />
-        <MetricCard
-          title="Resolution Time"
-          value={avgResolutionTime}
-          change="Per ticket"
-          icon={<Clock className="text-sky-400" />}
-        />
         
         {/* EVALUATION STATS */}
         <MetricCard
