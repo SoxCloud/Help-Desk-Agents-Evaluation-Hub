@@ -323,6 +323,20 @@ export const AdminDashboard: React.FC<Props> = ({
           change="Per ticket"
           icon={<Clock className="text-sky-400" />}
         />
+         {/* INTERACTION STATS */}
+        <MetricCard
+          title="Interactions"
+          value={totalInteractions}
+          change="Total"
+          icon={<Activity className="text-indigo-400" />}
+        />
+        <MetricCard
+          title="Int/Ticket"
+          value={avgInteractionsPerTicket}
+          change="Avg"
+          icon={<Activity className="text-cyan-400" />}
+        />
+        
         
         {/* CALL STATS GROUP */}
         <MetricCard
