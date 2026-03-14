@@ -317,6 +317,12 @@ export const AdminDashboard: React.FC<Props> = ({
           change="Success"
           icon={<Target className="text-emerald-400" />}
         />
+        <MetricCard
+          title="Resolution Time"
+          value={avgResolutionTime}
+          change="Per ticket"
+          icon={<Clock className="text-sky-400" />}
+        />
         
         {/* CALL STATS GROUP */}
         <MetricCard
