@@ -360,7 +360,7 @@ export const AdminDashboard: React.FC<Props> = ({
           icon={<CheckCircle className="text-emerald-400" />}
         />
         <MetricCard
-          title="Team QA"
+          title="CSAT Score"
           value={`${teamAverageScore}%`}
           change="Avg score"
           icon={<Award className="text-purple-400" />}
