@@ -36,6 +36,7 @@ import {
   AlertCircle,
   Ticket,
   BarChart4,
+  Percent,
 } from "lucide-react";
 
 interface Props {
@@ -206,6 +207,12 @@ export const AgentDashboard: React.FC<Props> = ({
   const cheeseUpsellPercentage = baseSales > 0
     ? ((totalCheeseSales / baseSales) * 100).toFixed(1)
     : "0";
+
+  // Calculate total Credits/Discounts count for this agent in the selected date range
+  const totalCreditsDiscounts = filteredHistory.reduce(
+    (sum, h) => sum + (h.creditsDiscounts || 0),
+    0,
+  );
 
   // Update goals with current values
   useEffect(() => {
@@ -396,7 +403,8 @@ export const AgentDashboard: React.FC<Props> = ({
         kpis,
         debonairsSales: totalDebSales,
         cheeseSales: totalCheeseSales,
-        cheeseUpsellPercentage: cheeseUpsellPercentage
+        cheeseUpsellPercentage: cheeseUpsellPercentage,
+        creditsDiscounts: totalCreditsDiscounts
       },
       evaluations: agent.evaluations || []
     };
@@ -535,7 +543,7 @@ export const AgentDashboard: React.FC<Props> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main Content Area */}
           <div className="lg:col-span-8 space-y-6">
-            {/* STAT CARDS GRID */}
+            {/* STAT CARDS GRID - UPDATED with Credits/Discounts */}
             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
               <PremiumStatCard
                 title="Calls Handled"
@@ -611,9 +619,17 @@ export const AgentDashboard: React.FC<Props> = ({
               <PremiumStatCard
                 title="Cheese Upsell"
                 value={`${cheeseUpsellPercentage}%`}
-                sub="added to base sales"
+                sub="added to base"
                 icon={<Zap />}
                 color="from-amber-500 to-yellow-500"
+              />
+              {/* NEW: Credits/Discounts Card */}
+              <PremiumStatCard
+                title="Credits/Discounts"
+                value={totalCreditsDiscounts}
+                sub="total given"
+                icon={<Percent />}
+                color="from-purple-500 to-pink-500"
               />
             </div>
 

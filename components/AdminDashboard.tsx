@@ -189,6 +189,14 @@ export const AdminDashboard: React.FC<Props> = ({
     0,
   );
 
+  // Calculate total Credits/Discounts count for the filtered date range
+  const totalCreditsDiscounts = agentsWithFilteredHistory.reduce(
+    (sum, a) =>
+      sum +
+      a.history.reduce((inner, h) => inner + (h.creditsDiscounts || 0), 0),
+    0,
+  );
+
   // Calculate cheese upsell percentage using Formula 2 for the selected date range
   const baseSales = totalDebSales - totalCheeseSales;
   const cheeseUpsellPercentage = baseSales > 0
@@ -380,6 +388,12 @@ export const AdminDashboard: React.FC<Props> = ({
           change="Added"
           icon={<Zap className="text-amber-400" />}
         />
+        <MetricCard
+  title="Credits/Discounts"
+  value={totalCreditsDiscounts}
+  change="Total given"
+  icon={<Award className="text-purple-400" />}
+/>
       </div>
 
       {/* Main Content Grid */}
@@ -658,24 +672,16 @@ export const AdminDashboard: React.FC<Props> = ({
                     )
                   : 0;
                 
-                // Calculate average interactions per ticket for this agent
-                const agentTotalInteractions = agent.history.reduce(
-                  (s, h) => s + (h.interactions || 0),
-                  0,
-                );
-                const agentAvgInteractions = totalTickets > 0
-                  ? (agentTotalInteractions / totalTickets).toFixed(1)
-                  : "0";
-
-                  // Calculate total Credits/Discounts count for the filtered date range
-const totalCreditsDiscounts = agentsWithFilteredHistory.reduce(
-  (sum, a) =>
-    sum +
-    a.history.reduce((inner, h) => inner + (h.creditsDiscounts || 0), 0),
+  // Calculate average interactions per ticket for this agent
+const agentTotalInteractions = agent.history.reduce(
+  (s, h) => s + (h.interactions || 0),
   0,
 );
-                
-                return (
+const agentAvgInteractions = totalTickets > 0
+  ? (agentTotalInteractions / totalTickets).toFixed(1)
+  : "0";
+
+return (
                 <tr
                   key={agent.id}
                   className="hover:bg-indigo-500/5 transition-colors group"

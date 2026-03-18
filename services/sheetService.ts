@@ -196,6 +196,7 @@ export const fetchAllDashboardData = async () => {
   // Indexes for Debonairs Sales and Cheese Sales
   const idxDebonairsSales = dIdx.get(["debsales", "deb sales", "debonairs", "deb"]);
   const idxCheeseSales = dIdx.get(["cheese sales", "cheese"]);
+  const idxCreditsDiscounts = dIdx.get(["credits/discounts", "credits", "discounts"]);
 
   dailyV1.slice(1).forEach((row) => {
     const agentName = (row[idxDailyAgent] ?? "").trim();
@@ -212,6 +213,7 @@ export const fetchAllDashboardData = async () => {
     // Parse Debonairs Sales and Cheese Sales (raw values only, no calculation)
     const debonairsSales = parseMoney(row[idxDebonairsSales] ?? "");
     const cheeseSales = parseMoney(row[idxCheeseSales] ?? "");
+    const creditsDiscounts = parseInt(row[idxCreditsDiscounts] ?? "0", 10) || 0;
 
     agent.history.push({
       date: normalizeDate((row[idxDailyDate] ?? "").trim()),
@@ -234,6 +236,7 @@ export const fetchAllDashboardData = async () => {
       // Store raw sales data only - no percentage calculation here
       debonairsSales: debonairsSales || undefined,
       cheeseSales: cheeseSales || undefined,
+      creditsDiscounts: creditsDiscounts || undefined,
     });
   });
 
