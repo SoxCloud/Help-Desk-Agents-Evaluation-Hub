@@ -16,6 +16,7 @@ import {
   BarChart4,
   Ticket,
   Zap,
+  Percent,
 } from "lucide-react";
 import {
   BarChart,
@@ -103,7 +104,7 @@ export const AdminDashboard: React.FC<Props> = ({
       ? (totalTeamScore / totalEvaluatedCalls).toFixed(1)
       : "0";
       
-  // Average handle time - REMOVED but keeping calculation for other uses if needed
+  // Average handle time calculation (kept for reference)
   const totalAhtSeconds = agentsWithFilteredHistory.reduce((sum, a) => {
     return (
       sum +
@@ -119,7 +120,6 @@ export const AdminDashboard: React.FC<Props> = ({
     0,
   );
 
-  // Keep calculation but don't display
   const avgHandleTimeMinutes =
     totalAhtSamples > 0
       ? `${Math.round(totalAhtSeconds / totalAhtSamples/60).toFixed(1)}m`
@@ -135,15 +135,9 @@ export const AdminDashboard: React.FC<Props> = ({
       sum + a.history.reduce((inner, h) => inner + (h.solvedTickets || 0), 0),
     0,
   );
-  
-  // REMOVED escalated tickets
-  // const totalEscalated = agentsWithFilteredHistory.reduce(...);
 
   const weightedResolutionRate =
     totalTickets > 0 ? ((totalSolved / totalTickets) * 100).toFixed(1) : "0";
-  
-  // REMOVED weightedEscalationRate
-  // const weightedEscalationRate = ...;
 
   const totalInteractions = agentsWithFilteredHistory.reduce(
     (sum, a) =>
@@ -151,6 +145,7 @@ export const AdminDashboard: React.FC<Props> = ({
     0,
   );
 
+  // AVERAGE RESOLUTION TIME (ART) - ADDED BACK
   const totalAvgResSeconds = agentsWithFilteredHistory.reduce((sum, a) => {
     return (
       sum +
@@ -174,7 +169,7 @@ export const AdminDashboard: React.FC<Props> = ({
       ? `${Math.round(totalAvgResSeconds / avgResSamples/60).toFixed(1)}m`
       : "0m";
 
-  // Calculate total Debonairs Sales and Cheese Sales for the filtered date range
+  // Calculate total Debonairs Sales and Cheese Sales
   const totalDebSales = agentsWithFilteredHistory.reduce(
     (sum, a) =>
       sum +
@@ -189,7 +184,7 @@ export const AdminDashboard: React.FC<Props> = ({
     0,
   );
 
-  // Calculate total Credits/Discounts count for the filtered date range
+  // Calculate total Credits/Discounts count
   const totalCreditsDiscounts = agentsWithFilteredHistory.reduce(
     (sum, a) =>
       sum +
@@ -197,7 +192,7 @@ export const AdminDashboard: React.FC<Props> = ({
     0,
   );
 
-  // Calculate cheese upsell percentage using Formula 2 for the selected date range
+  // Calculate cheese upsell percentage using Formula 2
   const baseSales = totalDebSales - totalCheeseSales;
   const cheeseUpsellPercentage = baseSales > 0
     ? ((totalCheeseSales / baseSales) * 100).toFixed(1)
@@ -212,6 +207,23 @@ export const AdminDashboard: React.FC<Props> = ({
 
   const avgInteractionsPerTicket = totalTicketsForInteractions > 0
     ? (totalInteractions / totalTicketsForInteractions).toFixed(1)
+    : "0";
+
+  // Calculate FCR (First Call Resolution) - average percentage across all agents
+  const totalFCR = agentsWithFilteredHistory.reduce(
+    (sum, a) =>
+      sum +
+      a.history.reduce((inner, h) => inner + (h.fcr || 0), 0),
+    0,
+  );
+  
+  const fcrSamples = agentsWithFilteredHistory.reduce(
+    (sum, a) => sum + a.history.length,
+    0,
+  );
+
+  const avgFCR = fcrSamples > 0
+    ? (totalFCR / fcrSamples).toFixed(1)
     : "0";
 
   // CHART DATA - Ticket Performance
@@ -304,7 +316,7 @@ export const AdminDashboard: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Stats Grid - REMOVED Escalated Tickets and Avg Handle Time */}
+      {/* Stats Grid - with FCR and ART added back */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
         {/* TICKET STATS GROUP */}
         <MetricCard
@@ -331,7 +343,16 @@ export const AdminDashboard: React.FC<Props> = ({
           change="Per ticket"
           icon={<Clock className="text-sky-400" />}
         />
-         {/* INTERACTION STATS */}
+        
+        {/* FCR STATS - NEW */}
+        <MetricCard
+          title="FCR"
+          value={`${avgFCR}%`}
+          change="First Call Resolution"
+          icon={<CheckCircle className="text-green-400" />}
+        />
+        
+        {/* INTERACTION STATS */}
         <MetricCard
           title="Interactions"
           value={totalInteractions}
@@ -344,7 +365,6 @@ export const AdminDashboard: React.FC<Props> = ({
           change="Avg"
           icon={<Activity className="text-cyan-400" />}
         />
-        
         
         {/* CALL STATS GROUP */}
         <MetricCard
@@ -389,11 +409,11 @@ export const AdminDashboard: React.FC<Props> = ({
           icon={<Zap className="text-amber-400" />}
         />
         <MetricCard
-  title="Credits/Discounts"
-  value={totalCreditsDiscounts}
-  change="Total given"
-  icon={<Award className="text-purple-400" />}
-/>
+          title="Credits/Discounts"
+          value={totalCreditsDiscounts}
+          change="Total given"
+          icon={<Percent className="text-purple-400" />}
+        />
       </div>
 
       {/* Main Content Grid */}
@@ -590,7 +610,7 @@ export const AdminDashboard: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Agent Performance Table */}
+      {/* Agent Performance Table - with FCR column added */}
       <div className="bg-[#1e293b] border border-slate-800 rounded-2xl overflow-hidden">
         <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/20">
           <h3 className="text-white font-semibold">Agents</h3>
@@ -616,10 +636,12 @@ export const AdminDashboard: React.FC<Props> = ({
                 <th className="px-6 py-4 text-center">Ans</th>
                 <th className="px-6 py-4 text-center">Abn%</th>
                 <th className="px-6 py-4 text-center">Tkts</th>
+                <th className="px-6 py-4 text-center">FCR%</th>
                 <th className="px-6 py-4 text-center">Int/Tkt</th>
                 <th className="px-6 py-4 text-center">CSAT</th>
                 <th className="px-6 py-4 text-center">KPI</th>
                 <th className="px-6 py-4 text-center">Cheese</th>
+                <th className="px-6 py-4 text-center">Credits</th>
                 <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
@@ -655,6 +677,21 @@ export const AdminDashboard: React.FC<Props> = ({
                   ? ((agentCheeseSales / agentBaseSales) * 100).toFixed(1)
                   : "0";
                 
+                // Calculate average FCR for this agent
+                const agentFCR = agent.history.reduce(
+                  (s, h) => s + (h.fcr || 0),
+                  0,
+                );
+                const agentFcrAvg = agent.history.length > 0
+                  ? (agentFCR / agent.history.length).toFixed(1)
+                  : "0";
+                
+                // Calculate credits for this agent
+                const agentCredits = agent.history.reduce(
+                  (s, h) => s + (h.creditsDiscounts || 0),
+                  0,
+                );
+                
                 const latestScore =
                   agent.evaluations.length > 0
                     ? agent.evaluations[agent.evaluations.length - 1]?.score
@@ -672,16 +709,16 @@ export const AdminDashboard: React.FC<Props> = ({
                     )
                   : 0;
                 
-  // Calculate average interactions per ticket for this agent
-const agentTotalInteractions = agent.history.reduce(
-  (s, h) => s + (h.interactions || 0),
-  0,
-);
-const agentAvgInteractions = totalTickets > 0
-  ? (agentTotalInteractions / totalTickets).toFixed(1)
-  : "0";
+                // Calculate average interactions per ticket for this agent
+                const agentTotalInteractions = agent.history.reduce(
+                  (s, h) => s + (h.interactions || 0),
+                  0,
+                );
+                const agentAvgInteractions = totalTickets > 0
+                  ? (agentTotalInteractions / totalTickets).toFixed(1)
+                  : "0";
 
-return (
+                return (
                 <tr
                   key={agent.id}
                   className="hover:bg-indigo-500/5 transition-colors group"
@@ -714,6 +751,11 @@ return (
                     {totalTickets}
                   </td>
                   <td className="px-6 py-4 text-center">
+                    <span className="text-xs font-black text-green-400">
+                      {agentFcrAvg}%
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
                     <span className="text-xs font-black text-cyan-400">
                       {agentAvgInteractions}
                     </span>
@@ -734,6 +776,11 @@ return (
                   <td className="px-6 py-4 text-center">
                     <span className="text-xs font-black text-amber-400">
                       {agentCheeseUpsell}%
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="text-xs font-black text-purple-400">
+                      {agentCredits}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">

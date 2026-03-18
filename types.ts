@@ -31,6 +31,7 @@ export interface DailyStats {
   cheeseSales?: number;
   cheeseUpsellPercentage?: number;
    creditsDiscounts?: number;
+   fcr?: number; 
 }
 
 export interface Kpis {

@@ -82,7 +82,7 @@ export const AgentDashboard: React.FC<Props> = ({
   const [isEditingGoals, setIsEditingGoals] = useState(false);
   const [goals, setGoals] = useState([
     { id: 1, name: 'Calls', target: 50, current: 0, unit: 'calls' },
-    { id: 2, name: 'QA Score', target: 90, current: 0, unit: '%' },
+    { id: 2, name: 'CSAT Score', target: 90, current: 0, unit: '%' },
     { id: 3, name: 'Resolution Rate', target: 85, current: 0, unit: '%' },
     { id: 4, name: 'Tickets Solved', target: 40, current: 0, unit: 'tickets' },
   ]);
@@ -151,10 +151,6 @@ export const AgentDashboard: React.FC<Props> = ({
     (sum, h) => sum + (h.solvedTickets || 0),
     0,
   );
-  const escalatedTickets = filteredHistory.reduce(
-    (sum, h) => sum + (h.escalatedTickets || 0),
-    0,
-  );
   const interactions = filteredHistory.reduce(
     (sum, h) => sum + (h.interactions || 0),
     0,
@@ -162,8 +158,6 @@ export const AgentDashboard: React.FC<Props> = ({
 
   const weightedResolutionRate =
     totalTickets > 0 ? Math.round((solvedTickets / totalTickets) * 100) : 0;
-  const weightedEscalationRate =
-    totalTickets > 0 ? Math.round((escalatedTickets / totalTickets) * 100) : 0;
 
   // Calculate average KPI score
   const averageKpiScore = (agent.evaluations || []).length > 0
@@ -186,14 +180,6 @@ export const AgentDashboard: React.FC<Props> = ({
       }, 0) / filteredHistory.length / 60).toFixed(1)
     : "0";
 
-  // Calculate average handle time in minutes
-  const avgHandleTimeMinutes = filteredHistory.length > 0
-    ? (filteredHistory.reduce((sum, h) => {
-        const secs = h.ahtSeconds ?? (parseInt(h.aht || "0", 10) || 0);
-        return sum + secs;
-      }, 0) / filteredHistory.length / 60).toFixed(1)
-    : "0";
-
   // Calculate cheese upsell for the selected date range using Formula 2
   const totalDebSales = filteredHistory.reduce(
     (sum, h) => sum + (h.debonairsSales || 0),
@@ -208,17 +194,26 @@ export const AgentDashboard: React.FC<Props> = ({
     ? ((totalCheeseSales / baseSales) * 100).toFixed(1)
     : "0";
 
-  // Calculate total Credits/Discounts count for this agent in the selected date range
+  // Calculate total Credits/Discounts count for this agent
   const totalCreditsDiscounts = filteredHistory.reduce(
     (sum, h) => sum + (h.creditsDiscounts || 0),
     0,
   );
 
+  // Calculate FCR (First Call Resolution) for this agent
+  const totalFCR = filteredHistory.reduce(
+    (sum, h) => sum + (h.fcr || 0),
+    0,
+  );
+  const avgFCR = filteredHistory.length > 0
+    ? (totalFCR / filteredHistory.length).toFixed(1)
+    : "0";
+
   // Update goals with current values
   useEffect(() => {
     setGoals([
       { id: 1, name: 'Calls', target: 50, current: totalCalls, unit: 'calls' },
-      { id: 2, name: 'QA Score', target: 90, current: currentScore, unit: '%' },
+      { id: 2, name: 'CSAT Score', target: 90, current: currentScore, unit: '%' },
       { id: 3, name: 'Resolution Rate', target: 85, current: weightedResolutionRate, unit: '%' },
       { id: 4, name: 'Tickets Solved', target: 40, current: solvedTickets, unit: 'tickets' },
     ]);
@@ -265,41 +260,6 @@ export const AgentDashboard: React.FC<Props> = ({
       setCoachLoading(false);
     }
   };
-
-  // Calculate streak
-  const calculateStreak = () => {
-    const sortedDates = (agent.history || [])
-      .map(h => new Date(h.date))
-      .sort((a, b) => b.getTime() - a.getTime());
-    
-    if (sortedDates.length === 0) return 0;
-    
-    let streak = 1;
-    let currentDate = sortedDates[0];
-    
-    for (let i = 1; i < sortedDates.length; i++) {
-      const prevDate = new Date(currentDate);
-      prevDate.setDate(prevDate.getDate() - 1);
-      
-      if (sortedDates[i].toDateString() === prevDate.toDateString()) {
-        streak++;
-        currentDate = sortedDates[i];
-      } else {
-        break;
-      }
-    }
-    
-    return streak;
-  };
-
-  const streak = calculateStreak();
-  const streakMessages = [
-    "Keep it up! 🔥",
-    "You're on fire! 🚀",
-    "Unstoppable! ⚡",
-    "Legendary! 👑",
-    "Record breaker! 🏆"
-  ];
 
   // Calculate achievements
   const achievements = [
@@ -367,7 +327,7 @@ export const AgentDashboard: React.FC<Props> = ({
 
   const comparisons = [
     {
-      metric: 'QA Score',
+      metric: 'CSAT Score',
       value: currentScore,
       teamAvg: teamAvgScore,
       icon: <Target size={14} />,
@@ -404,7 +364,8 @@ export const AgentDashboard: React.FC<Props> = ({
         debonairsSales: totalDebSales,
         cheeseSales: totalCheeseSales,
         cheeseUpsellPercentage: cheeseUpsellPercentage,
-        creditsDiscounts: totalCreditsDiscounts
+        creditsDiscounts: totalCreditsDiscounts,
+        fcr: avgFCR
       },
       evaluations: agent.evaluations || []
     };
@@ -451,7 +412,7 @@ export const AgentDashboard: React.FC<Props> = ({
               <div className="flex items-center gap-3 mb-1">
                 <h1 className="text-3xl font-black text-white tracking-tight">
                   {onBack
-                    ? `${agent.name}'s Universe`
+                    ? agent.name
                     : `Welcome back, ${agent.name.split(" ")[0]}!`}
                 </h1>
                 <span className="px-3 py-1 bg-white/20 backdrop-blur-md border border-white/30 rounded-full text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-1.5">
@@ -474,15 +435,6 @@ export const AgentDashboard: React.FC<Props> = ({
             >
               <Download size={16} className="text-white" />
             </button>
-
-            {/* Streak counter */}
-            <div className="flex items-center gap-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-md rounded-xl px-4 py-2 border border-orange-500/30">
-              <Flame className="text-orange-500" size={20} />
-              <div>
-                <span className="text-white font-bold text-lg">{streak}</span>
-                <span className="text-white/60 text-xs ml-1">day streak</span>
-              </div>
-            </div>
 
             {/* Date picker */}
             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 p-2 rounded-2xl">
@@ -543,7 +495,7 @@ export const AgentDashboard: React.FC<Props> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main Content Area */}
           <div className="lg:col-span-8 space-y-6">
-            {/* STAT CARDS GRID - UPDATED with Credits/Discounts */}
+            {/* STAT CARDS GRID - UPDATED with requested changes */}
             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
               <PremiumStatCard
                 title="Calls Handled"
@@ -568,18 +520,11 @@ export const AgentDashboard: React.FC<Props> = ({
                 color="from-sky-500 to-cyan-500"
               />
               <PremiumStatCard
-                title="QA Score"
+                title="CSAT Score"
                 value={`${currentScore}%`}
                 sub="latest evaluation"
                 icon={<Target />}
                 color="from-emerald-500 to-teal-500"
-              />
-              <PremiumStatCard
-                title="Handle Time"
-                value={`${avgHandleTimeMinutes}m`}
-                sub="avg AHT"
-                icon={<Clock />}
-                color="from-orange-500 to-amber-500"
               />
               <PremiumStatCard
                 title="Resolution Rate"
@@ -589,11 +534,11 @@ export const AgentDashboard: React.FC<Props> = ({
                 color="from-emerald-500 to-green-500"
               />
               <PremiumStatCard
-                title="Escalation Rate"
-                value={`${weightedEscalationRate}%`}
-                sub="needs attention"
-                icon={<Activity />}
-                color="from-rose-500 to-pink-500"
+                title="FCR Score"
+                value={`${avgFCR}%`}
+                sub="first call resolution"
+                icon={<CheckCircle />}
+                color="from-green-500 to-emerald-500"
               />
               <PremiumStatCard
                 title="Interactions"
@@ -623,7 +568,6 @@ export const AgentDashboard: React.FC<Props> = ({
                 icon={<Zap />}
                 color="from-amber-500 to-yellow-500"
               />
-              {/* NEW: Credits/Discounts Card */}
               <PremiumStatCard
                 title="Credits/Discounts"
                 value={totalCreditsDiscounts}
@@ -743,8 +687,8 @@ export const AgentDashboard: React.FC<Props> = ({
                         <span>{comp.metric}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-white font-bold">{comp.value}{comp.metric.includes('Rate') ? '%' : ''}</span>
-                        <span className="text-slate-500">vs {comp.teamAvg}{comp.metric.includes('Rate') ? '%' : ''}</span>
+                        <span className="text-white font-bold">{comp.value}{comp.metric.includes('Score') ? '%' : ''}</span>
+                        <span className="text-slate-500">vs {comp.teamAvg}{comp.metric.includes('Score') ? '%' : ''}</span>
                       </div>
                     </div>
                     <div className="relative h-2 bg-slate-700 rounded-full overflow-hidden">
@@ -1184,7 +1128,7 @@ export const AgentDashboard: React.FC<Props> = ({
 
                   <div className="bg-slate-950 px-8 py-3 rounded-2xl border border-slate-800 text-center min-w-[160px]">
                     <p className="text-[9px] text-indigo-400 font-black uppercase mb-0.5 tracking-widest">
-                      Score
+                      CSAT Score
                     </p>
                     <span
                       className={`text-3xl font-black ${
