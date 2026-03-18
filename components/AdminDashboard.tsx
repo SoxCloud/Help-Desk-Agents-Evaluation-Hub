@@ -666,6 +666,14 @@ export const AdminDashboard: React.FC<Props> = ({
                 const agentAvgInteractions = totalTickets > 0
                   ? (agentTotalInteractions / totalTickets).toFixed(1)
                   : "0";
+
+                  // Calculate total Credits/Discounts count for the filtered date range
+const totalCreditsDiscounts = agentsWithFilteredHistory.reduce(
+  (sum, a) =>
+    sum +
+    a.history.reduce((inner, h) => inner + (h.creditsDiscounts || 0), 0),
+  0,
+);
                 
                 return (
                 <tr
