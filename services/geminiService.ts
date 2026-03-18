@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { Agent, Evaluation } from "../types";
+import { Agent, AgentEval } from "../types";  // Change Evaluation to AgentEval
 
 const API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
@@ -14,7 +14,7 @@ const AVAILABLE_MODELS = {
   POWERFUL: "mixtral-8x7b-32768",      // More powerful, slightly slower
 };
 
-export const generateCoachingFeedback = async (agent: Agent, latestEval?: Evaluation) => {
+export const generateCoachingFeedback = async (agent: Agent, latestEval?: AgentEval) => {  // Change here too
   if (!latestEval) {
     return "👋 Welcome! Complete an evaluation to receive personalized coaching.";
   }
