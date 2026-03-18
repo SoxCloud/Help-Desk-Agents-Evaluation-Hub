@@ -145,7 +145,7 @@ export const AdminDashboard: React.FC<Props> = ({
     0,
   );
 
-  // AVERAGE RESOLUTION TIME (ART) - ADDED BACK
+  // AVERAGE RESOLUTION TIME (ART)
   const totalAvgResSeconds = agentsWithFilteredHistory.reduce((sum, a) => {
     return (
       sum +
@@ -275,7 +275,7 @@ export const AdminDashboard: React.FC<Props> = ({
   const activeAgents = agentsWithFilteredHistory.filter((a) => a.history.length > 0).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -317,7 +317,7 @@ export const AdminDashboard: React.FC<Props> = ({
       </div>
 
       {/* Stats Grid - with FCR and ART added back */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
         {/* TICKET STATS GROUP */}
         <MetricCard
           title="Total Tickets"
@@ -344,7 +344,7 @@ export const AdminDashboard: React.FC<Props> = ({
           icon={<Clock className="text-sky-400" />}
         />
         
-        {/* FCR STATS - NEW */}
+        {/* FCR STATS */}
         <MetricCard
           title="FCR"
           value={`${avgFCR}%`}
@@ -409,7 +409,7 @@ export const AdminDashboard: React.FC<Props> = ({
           icon={<Zap className="text-amber-400" />}
         />
         <MetricCard
-          title="Credits/Discounts"
+          title="Credits"
           value={totalCreditsDiscounts}
           change="Total given"
           icon={<Percent className="text-purple-400" />}
@@ -436,7 +436,7 @@ export const AdminDashboard: React.FC<Props> = ({
             </div>
           </div>
           
-          <div className="h-72">
+          <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={chartData} 
@@ -610,7 +610,7 @@ export const AdminDashboard: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Agent Performance Table - with FCR column added */}
+      {/* Agent Performance Table - with Answered, Abandoned, and Abandoned Rate */}
       <div className="bg-[#1e293b] border border-slate-800 rounded-2xl overflow-hidden">
         <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/20">
           <h3 className="text-white font-semibold">Agents</h3>
@@ -629,13 +629,14 @@ export const AdminDashboard: React.FC<Props> = ({
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="min-w-[1200px] lg:w-full text-left">
             <thead className="bg-slate-900/50 text-[10px] uppercase font-black text-slate-500 tracking-widest">
               <tr>
                 <th className="px-6 py-4">Agent</th>
-                <th className="px-6 py-4 text-center">Ans</th>
+                <th className="px-6 py-4 text-center">Answered</th>
+                <th className="px-6 py-4 text-center">Abandoned</th>
                 <th className="px-6 py-4 text-center">Abn%</th>
-                <th className="px-6 py-4 text-center">Tkts</th>
+                <th className="px-6 py-4 text-center">Tickets</th>
                 <th className="px-6 py-4 text-center">FCR%</th>
                 <th className="px-6 py-4 text-center">Int/Tkt</th>
                 <th className="px-6 py-4 text-center">CSAT</th>
@@ -738,6 +739,9 @@ export const AdminDashboard: React.FC<Props> = ({
                   </td>
                   <td className="px-6 py-4 text-xs font-black text-slate-300 text-center">
                     {totalAnswered}
+                  </td>
+                  <td className="px-6 py-4 text-xs font-black text-amber-400 text-center">
+                    {totalAbandoned}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className={`text-xs font-black ${
