@@ -411,10 +411,10 @@ export const AdminDashboard: React.FC<Props> = ({
           
           {/* CREDITS CARD - ADDED BACK with showPercentage=false */}
           <MetricCard
-            title="Credits"
+            title="Credits Issued"
             value={totalCreditsDiscounts}
             change="Total given"
-            icon={<Percent className="text-purple-400" />}
+           icon={<Ticket className="text-purple-400" />}
             showPercentage={false}
           />
         </div>
