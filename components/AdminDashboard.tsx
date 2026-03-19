@@ -172,6 +172,7 @@ export const AdminDashboard: React.FC<Props> = ({
   );
 
   // Calculate cheese upsell percentage using Formula 2
+  // Formula: Cheese Upsell % = (Cheese Sales ÷ (Debonairs Sales - Cheese Sales)) × 100
   const baseSales = totalDebSales - totalCheeseSales;
   const cheeseUpsellPercentage = baseSales > 0
     ? ((totalCheeseSales / baseSales) * 100).toFixed(1)
@@ -296,92 +297,125 @@ export const AdminDashboard: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats Grid - with Credits card added back */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
+          {/* Numbers (no percentage) */}
           <MetricCard
             title="Total Tickets"
             value={totalTickets}
             change="All tickets"
             icon={<Ticket className="text-violet-400" />}
+            showPercentage={false}
           />
           <MetricCard
             title="Solved"
             value={totalSolved}
             change={`${Math.round((totalSolved/totalTickets)*100)}%`}
             icon={<CheckCircle className="text-emerald-400" />}
+            showPercentage={false}
           />
+          
+          {/* Percentages */}
           <MetricCard
             title="Resolution"
-            value={`${weightedResolutionRate}%`}
+            value={weightedResolutionRate}
             change="Success"
             icon={<Target className="text-emerald-400" />}
+            showPercentage={true}
           />
+          
+          {/* Time (with 'm' suffix) */}
           <MetricCard
             title="Resolution Time"
             value={avgResolutionTime}
             change="Per ticket"
             icon={<Clock className="text-sky-400" />}
+            showPercentage={false}
           />
+          
+          {/* Percentages */}
           <MetricCard
             title="FCR"
-            value={`${avgFCR}%`}
+            value={avgFCR}
             change="First Call Resolution"
             icon={<CheckCircle className="text-green-400" />}
+            showPercentage={true}
           />
+          
+          {/* Numbers */}
           <MetricCard
             title="Interactions"
             value={totalInteractions}
             change="Total"
             icon={<Activity className="text-indigo-400" />}
+            showPercentage={false}
           />
           <MetricCard
             title="Int/Ticket"
             value={avgInteractionsPerTicket}
             change="Avg"
             icon={<Activity className="text-cyan-400" />}
+            showPercentage={false}
           />
           <MetricCard
             title="Total Calls"
             value={totalCalls}
             change="All calls"
             icon={<PhoneCall className="text-blue-400" />}
+            showPercentage={false}
           />
+          
+          {/* Percentage (abandoned rate) */}
           <MetricCard
             title="Abandoned"
             value={totalAbandonedCalls}
             change={`${callAbandonedRate}%`}
             icon={<Activity className="text-rose-400" />}
+            showPercentage={false}
           />
+          
+          {/* Numbers */}
           <MetricCard
             title="Evaluations"
             value={totalEvaluatedCalls}
             change="Total"
             icon={<CheckCircle className="text-emerald-400" />}
+            showPercentage={false}
           />
+          
+          {/* Percentage */}
           <MetricCard
             title="CSAT Score"
-            value={`${teamAverageScore}%`}
+            value={teamAverageScore}
             change="Avg score"
             icon={<Award className="text-purple-400" />}
+            showPercentage={true}
           />
+          
+          {/* Special format (agents count) */}
           <MetricCard
             title="Active Agents"
             value={`${activeAgents}/${agents.length}`}
             icon={<Users className="text-indigo-400" />}
+            showPercentage={false}
           />
+          
+          {/* Percentage */}
           <MetricCard
             title="Cheese Upsell"
-            value={`${cheeseUpsellPercentage}%`}
+            value={cheeseUpsellPercentage}
             change="Added"
             icon={<Zap className="text-amber-400" />}
+            showPercentage={true}
           />
-          {/* Credits Card - NO PERCENTAGE SIGN */}
+          
+          {/* CREDITS CARD - ADDED BACK with showPercentage=false */}
           <MetricCard
             title="Credits"
             value={totalCreditsDiscounts}
             change="Total given"
             icon={<Percent className="text-purple-400" />}
-            isPercentage={false}
+            showPercentage={false}
           />
         </div>
 
@@ -766,31 +800,36 @@ export const AdminDashboard: React.FC<Props> = ({
   );
 };
 
-// MetricCard component - Updated to handle percentage vs number
-const MetricCard = ({ title, value, change, icon, isPercentage = true }: any) => (
-  <div className="bg-[#1e293b] border border-slate-800 p-4 rounded-2xl relative overflow-hidden group hover:border-indigo-500/50 transition-all">
-    <div className="flex justify-between items-start gap-2">
-      <div className="min-w-0 flex-1">
-        <p className="text-[9px] uppercase font-bold text-slate-500 tracking-widest mb-1 truncate" title={title}>
-          {title}
-        </p>
-        <div className="flex flex-wrap items-end gap-x-1 gap-y-1">
-          <span className="text-xl md:text-2xl font-black text-white leading-none">
-            {value}{isPercentage ? '%' : ''}
-          </span>
-          {change && (
-            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap bg-emerald-500/10 text-emerald-500">
-              {change}
+// MetricCard component - with showPercentage control
+const MetricCard = ({ title, value, change, icon, showPercentage = false }: any) => {
+  // Don't add % if showPercentage is false
+  const displayValue = showPercentage ? `${value}%` : value;
+  
+  return (
+    <div className="bg-[#1e293b] border border-slate-800 p-4 rounded-2xl relative overflow-hidden group hover:border-indigo-500/50 transition-all">
+      <div className="flex justify-between items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] uppercase font-bold text-slate-500 tracking-widest mb-1 truncate" title={title}>
+            {title}
+          </p>
+          <div className="flex flex-wrap items-end gap-x-1 gap-y-1">
+            <span className="text-xl md:text-2xl font-black text-white leading-none">
+              {displayValue}
             </span>
-          )}
+            {change && (
+              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap bg-emerald-500/10 text-emerald-500">
+                {change}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="shrink-0 p-2 bg-slate-900 rounded-xl border border-slate-800 text-indigo-400 group-hover:scale-110 transition-transform">
+          {React.cloneElement(icon, { size: 18 })}
         </div>
       </div>
-      <div className="shrink-0 p-2 bg-slate-900 rounded-xl border border-slate-800 text-indigo-400 group-hover:scale-110 transition-transform">
-        {React.cloneElement(icon, { size: 18 })}
-      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const KPICard = ({ label, value, icon, color }: any) => (
   <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700 hover:border-indigo-500/50 transition-all group">
