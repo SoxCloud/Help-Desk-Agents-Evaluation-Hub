@@ -1078,126 +1078,44 @@ export const AgentDashboard: React.FC<Props> = ({
         </div>
       ) : (
         /* EVALUATIONS VIEW */
-        <div className="grid grid-cols-1 gap-6 animate-in slide-in-from-bottom-6 duration-500">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in slide-in-from-bottom-6 duration-500">
           {(filteredEvaluations.length ? filteredEvaluations : (agent.evaluations || [])).map((evalItem, idx) => {
             const phoneNumber = evalItem.id ? formatPhoneNumber(evalItem.id) : `#${1000 + idx}`;
             
             return (
               <div
                 key={idx}
-                className="bg-[#1e293b]/40 border border-slate-800 rounded-[2rem] overflow-hidden flex flex-col shadow-2xl group hover:border-indigo-500/40 transition-all"
+                className="bg-[#1e293b] border border-slate-800 rounded-lg overflow-hidden shadow-lg group hover:border-indigo-500/40 transition-all"
               >
-                <div className="p-6 border-b border-slate-800 flex flex-col md:flex-row justify-between items-center bg-slate-900/40 gap-4">
-                  <div className="flex items-center gap-5">
-                    <div className="p-4 bg-indigo-600/20 rounded-2xl text-indigo-400 border border-indigo-500/20 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                      <MessageSquare size={24} />
-                    </div>
-                    <div>
-                      <h3 className="text-white font-bold text-xl">
-                        Call from: {phoneNumber}
-                      </h3>
-                      <div className="flex gap-4 mt-1 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                        <span className="flex items-center gap-1.5 font-bold">
-                          <Calendar size={12} className="text-indigo-500" />{" "}
-                          {evalItem.date || dateRange.start}
-                        </span>
-                        <span className="flex items-center gap-1.5 font-bold">
-                          <Clock size={12} className="text-indigo-500" />{" "}
-                          {evalItem.duration || 
-                            (evalItem.durationSeconds
-                              ? `${Math.floor(evalItem.durationSeconds / 60)
-                                  .toString()
-                                  .padStart(2, "0")}:${(evalItem.durationSeconds % 60)
-                                  .toString()
-                                  .padStart(2, "0")} MIN`
-                              : "N/A")}
-                        </span>
-                        {evalItem.callType && (
-                          <span className="flex items-center gap-1.5 font-bold">
-                            <PhoneCall size={12} className="text-indigo-500" />{" "}
-                            {evalItem.callType}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-950 px-8 py-3 rounded-2xl border border-slate-800 text-center min-w-[160px]">
-                    <p className="text-[9px] text-indigo-400 font-black uppercase mb-0.5 tracking-widest">
-                      CSAT Score
-                    </p>
-                    <span
-                      className={`text-3xl font-black ${
-                        evalItem.score >= 90 ? "text-emerald-400" : "text-orange-400"
-                      }`}
-                    >
+                <div className="p-3 border-b border-slate-800 bg-slate-900/40">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-white font-bold text-xs truncate">{phoneNumber}</span>
+                    <span className={`text-lg font-black ${evalItem.score >= 90 ? "text-emerald-400" : "text-orange-400"}`}>
                       {evalItem.score}%
                     </span>
                   </div>
-                </div>
-
-                <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-12">
-                  <div className="space-y-6">
-                    <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
-                      Performance Metrics
-                    </h4>
-                    <ThickKPI
-                      label="Product Knowledge"
-                      value={evalItem.kpis.product || 0}
-                      color="bg-blue-500"
-                    />
-                    <ThickKPI
-                      label="Phone Etiquette"
-                      value={evalItem.kpis.etiquette || 0}
-                      color="bg-indigo-500"
-                    />
-                    <ThickKPI
-                      label="Problem Solving"
-                      value={evalItem.kpis.solving || 0}
-                      color="bg-purple-500"
-                    />
-                    <ThickKPI
-                      label="Upselling"
-                      value={evalItem.kpis.upsell || 0}
-                      color="bg-emerald-500"
-                    />
-                    <ThickKPI
-                      label="Promotion"
-                      value={evalItem.kpis.promo || 0}
-                      color="bg-amber-500"
-                    />
-                    <ThickKPI
-                      label="Information Capture"
-                      value={evalItem.kpis.capture || 0}
-                      color="bg-rose-500"
-                    />
-                  </div>
-
-                  <div className="flex flex-col h-full">
-                    <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">
-                      Evaluator Comments
-                    </h4>
-                    <div className="flex-1 bg-slate-900/60 rounded-3xl p-6 border border-slate-800 relative">
-                      <p className="text-slate-300 text-sm leading-relaxed italic relative z-10">
-                        "
-                        {evalItem.comments ||
-                          evalItem.positivePoints ||
-                          evalItem.improvementAreas ||
-                          "No comments recorded"}
-                        "
-                      </p>
-                      {evalItem.evaluator && (
-                        <p className="text-[10px] text-indigo-400 mt-3 font-bold">
-                          - {evalItem.evaluator}
-                        </p>
-                      )}
-                      <div className="mt-8 pt-6 border-t border-slate-800/50 flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                        <span>Status: Finalized</span>
-                        <span className="text-indigo-400">OmniDesk QA Team</span>
-                      </div>
-                    </div>
+                  <div className="flex justify-between text-[9px] text-slate-500">
+                    <span>{evalItem.date || dateRange.start}</span>
+                    <span>{evalItem.duration || (evalItem.durationSeconds ? `${Math.floor(evalItem.durationSeconds / 60)}:${(evalItem.durationSeconds % 60).toString().padStart(2, "0")}` : "")}</span>
                   </div>
                 </div>
+
+                <div className="p-2 space-y-1">
+                  <KPIMini label="Product" value={evalItem.kpis.product || 0} />
+                  <KPIMini label="Etiquette" value={evalItem.kpis.etiquette || 0} />
+                  <KPIMini label="Solving" value={evalItem.kpis.solving || 0} />
+                  <KPIMini label="Upsell" value={evalItem.kpis.upsell || 0} />
+                  <KPIMini label="Promotion" value={evalItem.kpis.promo || 0} />
+                  <KPIMini label="Capture" value={evalItem.kpis.capture || 0} />
+                </div>
+
+                {evalItem.comments && (
+                  <div className="px-3 pb-3 border-t border-slate-800/50 mt-2 pt-2">
+                    <p className="text-[9px] text-slate-400 italic line-clamp-2">
+                      "{evalItem.comments}"
+                    </p>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -1264,6 +1182,21 @@ const MiniKPICard = ({ label, value, color }: { label: string; value: number; co
         className={`h-full rounded-full bg-gradient-to-r ${color}`}
         style={{ width: `${value}%` }}
       ></div>
+    </div>
+  </div>
+);
+
+const KPIMini = ({ label, value }: { label: string; value: number }) => (
+  <div className="space-y-1">
+    <div className="flex justify-between items-center text-[10px]">
+      <span className="text-slate-500 font-bold">{label}</span>
+      <span className="text-white font-black">{value}%</span>
+    </div>
+    <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+      <div 
+        className="h-full bg-indigo-500 rounded-full"
+        style={{ width: `${value}%` }}
+      />
     </div>
   </div>
 );
