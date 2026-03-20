@@ -217,12 +217,10 @@ export const fetchAllDashboardData = async () => {
     const infoCapturing = parseInt((row[idxInfoCapturing] ?? "0").trim(), 10) || 0;
     const resolution = parseInt((row[idxResolution] ?? "0").trim(), 10) || 0;
     
-    // Calculate overall score as average of the scores
-    const scores = [phoneEtiquette, problemSolving, productKnowledge, upselling];
-    const validScores = scores.filter(s => s > 0);
-    const score = validScores.length > 0 
-      ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length)
-      : 0;
+    // Calculate overall score as average of all 6 KPIs
+    const score = Math.round(
+      (phoneEtiquette + problemSolving + productKnowledge + upselling + promotion + infoCapturing) / 6
+    );
     
     // Try to get overall rating if it exists
     let overallRating: number | undefined;

@@ -92,12 +92,12 @@ export const AdminDashboard: React.FC<Props> = ({
   // EVALUATION STATS
   const allEvaluations = agentsWithFilteredHistory.flatMap((a) => a.evaluations);
 
-  const totalEvaluatedCalls = allEvaluations.length;
-
-  const totalTeamScore = allEvaluations.reduce(
-    (sum, e) => sum + (e.score || 0),
-    0,
-  );
+  const totalTeamScore = allEvaluations.reduce((sum, e) => {
+    const kpi = e.kpis || {};
+    return sum + (kpi.product || 0) + (kpi.etiquette || 0) + (kpi.solving || 0) + 
+           (kpi.upsell || 0) + (kpi.promo || 0) + (kpi.capture || 0);
+  }, 0);
+  const totalEvaluatedCalls = allEvaluations.length * 6;
 
   const teamAverageScore =
     totalEvaluatedCalls > 0

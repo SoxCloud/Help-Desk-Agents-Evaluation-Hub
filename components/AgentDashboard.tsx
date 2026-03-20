@@ -160,16 +160,12 @@ export const AgentDashboard: React.FC<Props> = ({
     totalTickets > 0 ? Math.round((solvedTickets / totalTickets) * 100) : 0;
 
   // Calculate average KPI score
-  const averageKpiScore = (agent.evaluations || []).length > 0
-    ? Math.round(
-        (agent.evaluations || []).reduce((sum, e) => {
-          const kpiSum = (e.kpis.product || 0) + (e.kpis.etiquette || 0) + 
-                        (e.kpis.solving || 0) + (e.kpis.upsell || 0) + 
-                        (e.kpis.promo || 0) + (e.kpis.capture || 0);
-          return sum + (kpiSum / 6);
-        }, 0) / (agent.evaluations || []).length
-      )
-    : 0;
+  const evaluations = agent.evaluations || [];
+  const totalKpiScore = evaluations.reduce((sum, e) => 
+    sum + (e.kpis?.product || 0) + (e.kpis?.etiquette || 0) + (e.kpis?.solving || 0) + 
+    (e.kpis?.upsell || 0) + (e.kpis?.promo || 0) + (e.kpis?.capture || 0), 0);
+  const averageKpiScore = evaluations.length > 0 
+    ? Math.round(totalKpiScore / (evaluations.length * 6)) : 0;
 
   // Calculate average resolution time in minutes
   const avgResolutionTimeMinutes = filteredHistory.length > 0
