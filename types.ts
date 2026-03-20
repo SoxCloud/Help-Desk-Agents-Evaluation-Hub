@@ -47,6 +47,7 @@ export interface AgentEval {
   id: string;
   kpis: Kpis;
   date: string;
+  callReceivedDate?: string;
   evaluator?: string;
   called?: string;
   callType?: string;

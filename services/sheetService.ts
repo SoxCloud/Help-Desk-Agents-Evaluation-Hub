@@ -138,6 +138,7 @@ export const fetchAllDashboardData = async () => {
   const idxEvalEmail = eIdx.findColumn(["email"]);
   const idxCalled = eIdx.findColumn(["callId"]);  // Changed from callid to callId
   const idxEvalDate = eIdx.findColumn(["Date"]);   // Capital D in Date
+  const idxCallReceivedDate = eIdx.findColumn(["callReceivedDate", "CallReceivedDate", "callDate", "CallDate", "callReceived"]);
   const idxEvaluator = eIdx.findColumn(["evaluator"]);
   const idxCallType = eIdx.findColumn(["callType"]);
   const idxDuration = eIdx.findColumn(["duration"]);
@@ -254,6 +255,7 @@ export const fetchAllDashboardData = async () => {
     const evaluation: any = {
       id: called || `eval-${Date.now()}-${Math.random()}`,
       date: normalizeDate((row[idxEvalDate] ?? "").trim()),
+      callReceivedDate: normalizeDate((row[idxCallReceivedDate] ?? "").trim()),
       evaluator: (row[idxEvaluator] ?? "").trim() || undefined,
       called: called || undefined,
       callType: (row[idxCallType] ?? "").trim() || undefined,

@@ -1095,7 +1095,12 @@ export const AgentDashboard: React.FC<Props> = ({
                     </span>
                   </div>
                   <div className="flex justify-between text-[9px] text-slate-500">
-                    <span>{evalItem.date || dateRange.start}</span>
+                    <div className="flex flex-col">
+                      {evalItem.callReceivedDate && (
+                        <span>Called: {evalItem.callReceivedDate}</span>
+                      )}
+                      <span className="text-indigo-400">{evalItem.date || dateRange.start}</span>
+                    </div>
                     <span>{evalItem.duration || (evalItem.durationSeconds ? `${Math.floor(evalItem.durationSeconds / 60)}:${(evalItem.durationSeconds % 60).toString().padStart(2, "0")}` : "")}</span>
                   </div>
                 </div>
