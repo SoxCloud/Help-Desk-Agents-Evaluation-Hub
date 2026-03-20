@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { LogIn, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 
 export const Login = ({
@@ -6,11 +6,24 @@ export const Login = ({
 }: {
   onLogin: (email: string, password: string) => Promise<boolean>;
 }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(() => localStorage.getItem("rememberedEmail") || "");
+  const [password, setPassword] = useState(() => localStorage.getItem("rememberedPassword") || "");
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem("rememberMe") === "true");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (rememberMe) {
+      localStorage.setItem("rememberedEmail", email);
+      localStorage.setItem("rememberedPassword", password);
+      localStorage.setItem("rememberMe", "true");
+    } else {
+      localStorage.removeItem("rememberedEmail");
+      localStorage.removeItem("rememberedPassword");
+      localStorage.setItem("rememberMe", "false");
+    }
+  }, [email, password, rememberMe]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,6 +121,19 @@ export const Login = ({
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-600 bg-[#020617] text-blue-500 focus:ring-blue-500 cursor-pointer"
+              />
+              <label htmlFor="rememberMe" className="ml-2 text-xs text-slate-400 cursor-pointer select-none">
+                Remember password
+              </label>
             </div>
 
             {error && (

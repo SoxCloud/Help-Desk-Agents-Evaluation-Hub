@@ -122,6 +122,15 @@ const App: React.FC = () => {
 
   useEffect(() => { loadData(); }, []);
 
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [sidebarOpen]);
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -225,11 +234,11 @@ const App: React.FC = () => {
       )}
 
       {/* Main Content - Scrollable area */}
-      <main className="flex-1 overflow-y-auto h-screen">
+      <main className="flex-1 overflow-y-auto">
         {/* Spacer for mobile header */}
         <div className="h-16 lg:hidden"></div>
         
-        <div className="p-4 sm:p-6 lg:p-8 max-w-[2000px] mx-auto">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[2000px] mx-auto pb-8">
           {user.role === UserRole.ADMIN ? (
             selectedAgentId ? (
               (() => {
