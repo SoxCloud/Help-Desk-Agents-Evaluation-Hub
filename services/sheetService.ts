@@ -1,3 +1,5 @@
+// sheetService.ts - UPDATED COLUMN MAPPING
+
 import { Agent, AgentStatus, UserRole } from "../types";
 
 const SHEET_ID = "1_MEcMoGiXuYhmxwKv0-Cc0SryMYVIpVOMO6ea2MrKwY";
@@ -78,22 +80,32 @@ export const fetchAllDashboardData = async () => {
   const agentsMap: Record<string, Agent> = {};
   const nameToEmail: Record<string, string> = {};
 
-  const headerIndex = (headers: string[]) => {
-    const normalized = headers.map((h) => h.trim().toLowerCase());
-    const get = (candidates: string[]) =>
-      candidates
-        .map((c) => normalized.indexOf(c.toLowerCase()))
-        .find((idx) => idx !== -1) ?? -1;
-    return { get };
+  // Helper to find column indices by exact match or case-insensitive
+  const getColumnIndices = (headers: string[]) => {
+    const normalizedHeaders = headers.map(h => h.trim().toLowerCase());
+    
+    const findColumn = (candidates: string[]): number => {
+      for (const candidate of candidates) {
+        const candLower = candidate.toLowerCase();
+        // Exact match first
+        let idx = normalizedHeaders.findIndex(h => h === candLower);
+        if (idx !== -1) return idx;
+        // Then try prefix match (e.g., "agent" matches "agent Sogcinwa...")
+        idx = normalizedHeaders.findIndex(h => h.startsWith(candLower));
+        if (idx !== -1) return idx;
+      }
+      return -1;
+    };
+    
+    return { findColumn };
   };
 
   // 1) Build agents from AgentsV1 (source of truth)
-  // Expected header: agentId | name | email | department
   const agentHeaders = agentsV1[0] ?? [];
-  const aIdx = headerIndex(agentHeaders);
-  const idxName = aIdx.get(["name"]);
-  const idxEmail = aIdx.get(["email"]);
-  const idxDepartment = aIdx.get(["department"]);
+  const aIdx = getColumnIndices(agentHeaders);
+  const idxName = aIdx.findColumn(["name", "agent"]);
+  const idxEmail = aIdx.findColumn(["email"]);
+  const idxDepartment = aIdx.findColumn(["department"]);
 
   agentsV1.slice(1).forEach((row) => {
     const name = (row[idxName] ?? "").trim();
@@ -103,7 +115,7 @@ export const fetchAllDashboardData = async () => {
 
     const department = (row[idxDepartment] ?? "").trim();
     agentsMap[email] = {
-      id: email, // keep login method: id == email
+      id: email,
       name,
       email,
       role: UserRole.AGENT,
@@ -117,86 +129,179 @@ export const fetchAllDashboardData = async () => {
     if (name) nameToEmail[normalizeName(name)] = email;
   });
 
-  // 2) CallEvaluationsV1 (one row per evaluated call)
+  // 2) CallEvaluationsV1 - UPDATED MAPPING TO MATCH YOUR ACTUAL COLUMNS
   const evalHeaders = evalV1[0] ?? [];
-  const eIdx = headerIndex(evalHeaders);
-  const idxEvalAgent = eIdx.get(["agent"]);
-  const idxEvalEmail = eIdx.get(["email"]);
-  const idxCalled = eIdx.get(["called", "dialed", "phone"]);
-  const idxEvalDate = eIdx.get(["date"]);
-  const idxEvaluator = eIdx.get(["evaluator"]);
-  const idxCallType = eIdx.get(["calltype", "call type"]);
-  const idxDuration = eIdx.get(["duration"]);
-  const idxProduct = eIdx.get(["productknowledgescore", "product knowledge score", "productknowledge", "product"]);
-  const idxEtiquette = eIdx.get(["phoneetiquettescore", "phone etiquette score", "phoneetiquette", "etiquette"]);
-  const idxProblem = eIdx.get(["problemsolvingscore", "problem solving score", "problemsolving", "problem"]);
-  const idxUpsell = eIdx.get(["upsellingskillscore", "upsellingscore", "upselling", "upsell"]);
-  const idxPromo = eIdx.get(["promotionbillscore", "promotion score", "promo"]);
-  const idxCapture = eIdx.get(["infocapturingscore", "info capturing score", "infocapturing", "capture"]);
-  const idxComment = eIdx.get(["evaluatorcomment", "evaluator comment", "comment", "comments"]);
-  const idxPositive = eIdx.get(["positivepoints", "positive points"]);
-  const idxImprove = eIdx.get(["improvementareas", "improvement areas", "improvement"]);
-  const idxRating = eIdx.get(["overallrating", "overall rating", "rating"]);
+  const eIdx = getColumnIndices(evalHeaders);
+  
+  // Map your exact column names from the image
+  const idxEvalAgent = eIdx.findColumn(["agent"]);
+  const idxEvalEmail = eIdx.findColumn(["email"]);
+  const idxCalled = eIdx.findColumn(["callId"]);  // Changed from callid to callId
+  const idxEvalDate = eIdx.findColumn(["Date"]);   // Capital D in Date
+  const idxEvaluator = eIdx.findColumn(["evaluator"]);
+  const idxCallType = eIdx.findColumn(["callType"]);
+  const idxDuration = eIdx.findColumn(["duration"]);
+  const idxPhoneEtiquette = eIdx.findColumn(["phoneEtiquetteScore"]);
+  const idxProblemSolving = eIdx.findColumn(["problemSolvingScore"]);
+  const idxProductKnowledge = eIdx.findColumn(["productKnowledgeScore"]);
+  const idxFCR = eIdx.findColumn(["FCR"]);
+  const idxUpselling = eIdx.findColumn(["upsellingScore"]);
+  const idxPromotion = eIdx.findColumn(["promotionScore"]);
+  const idxInfoCapturing = eIdx.findColumn(["infoCapturingScore"]);
+  const idxResolution = eIdx.findColumn(["Resolution"]);
+  const idxComment = eIdx.findColumn(["evaluatorComment"]);
+  
+  // For overall rating - if not present, we'll calculate from the scores
+  const idxOverallRating = eIdx.findColumn(["overallRating", "overall rating", "rating"]);
+
+  console.log("Column indices found:", {
+    headers: evalHeaders,
+    agent: idxEvalAgent,
+    email: idxEvalEmail,
+    callId: idxCalled,
+    date: idxEvalDate,
+    evaluator: idxEvaluator,
+    callType: idxCallType,
+    duration: idxDuration,
+    phoneEtiquette: idxPhoneEtiquette,
+    problemSolving: idxProblemSolving,
+    productKnowledge: idxProductKnowledge,
+    fcr: idxFCR,
+    upselling: idxUpselling,
+    promotion: idxPromotion,
+    infoCapturing: idxInfoCapturing,
+    resolution: idxResolution,
+    comment: idxComment,
+    overallRating: idxOverallRating
+  });
 
   evalV1.slice(1).forEach((row) => {
+    // Log the row to see what data is coming in
+    console.log("Processing evaluation row:", row);
+    
     const agentName = (row[idxEvalAgent] ?? "").trim();
     const emailRaw = (row[idxEvalEmail] ?? "").trim();
-    const email = emailRaw ? emailRaw.toLowerCase() : nameToEmail[normalizeName(agentName)];
-    if (!email) return;
-
-    const ratingRaw = (row[idxRating] ?? "").trim();
-    const rating = parseFloat(ratingRaw);
-    if (Number.isNaN(rating)) return;
+    let email = "";
+    
+    if (emailRaw) {
+      email = emailRaw.toLowerCase();
+    } else if (agentName) {
+      email = nameToEmail[normalizeName(agentName)];
+    }
+    
+    if (!email) {
+      console.log("No email found for agent:", agentName);
+      return;
+    }
 
     const agent = agentsMap[email];
-    if (!agent) return;
+    if (!agent) {
+      console.log("Agent not found in map for email:", email);
+      return;
+    }
 
-    const durationSeconds = parseTimeToSeconds((row[idxDuration] ?? "").trim());
-
-    agent.evaluations.push({
-      id: `eval-${Date.now()}-${Math.random()}`,
-      date: normalizeDate((row[idxEvalDate] ?? "").trim()),
-      evaluator: (row[idxEvaluator] ?? "").trim(),
-      called: (row[idxCalled] ?? "").trim() || undefined,
-      callType: (row[idxCallType] ?? "").trim() || undefined,
-      durationSeconds: durationSeconds || undefined,
-      overallRating: rating,
-      score: (rating / 5) * 100,
-      positivePoints: (row[idxPositive] ?? "").trim() || undefined,
-      improvementAreas: (row[idxImprove] ?? "").trim() || undefined,
-      comments: (row[idxComment] ?? "").trim() || undefined,
-      kpis: {
-        product: parseInt((row[idxProduct] ?? "").trim(), 10) || 0,
-        etiquette: parseInt((row[idxEtiquette] ?? "").trim(), 10) || 0,
-        solving: parseInt((row[idxProblem] ?? "").trim(), 10) || 0,
-        upsell: parseInt((row[idxUpsell] ?? "").trim(), 10) || 0,
-        promo: parseInt((row[idxPromo] ?? "").trim(), 10) || 0,
-        capture: parseInt((row[idxCapture] ?? "").trim(), 10) || 0,
-      },
+    // Parse duration (value "20" means 20 seconds)
+    const durationStr = (row[idxDuration] ?? "").trim();
+    let durationSeconds = 0;
+    if (durationStr) {
+      durationSeconds = parseInt(durationStr, 10) || 0;
+    }
+    
+    // Parse scores (from your example: Esther has all zeros)
+    const phoneEtiquette = parseInt((row[idxPhoneEtiquette] ?? "0").trim(), 10) || 0;
+    const problemSolving = parseInt((row[idxProblemSolving] ?? "0").trim(), 10) || 0;
+    const productKnowledge = parseInt((row[idxProductKnowledge] ?? "0").trim(), 10) || 0;
+    const fcr = parseInt((row[idxFCR] ?? "0").trim(), 10) || 0;
+    const upselling = parseInt((row[idxUpselling] ?? "0").trim(), 10) || 0;
+    const promotion = parseInt((row[idxPromotion] ?? "0").trim(), 10) || 0;
+    const infoCapturing = parseInt((row[idxInfoCapturing] ?? "0").trim(), 10) || 0;
+    const resolution = parseInt((row[idxResolution] ?? "0").trim(), 10) || 0;
+    
+    // Calculate overall score as average of the scores
+    const scores = [phoneEtiquette, problemSolving, productKnowledge, upselling];
+    const validScores = scores.filter(s => s > 0);
+    const score = validScores.length > 0 
+      ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length)
+      : 0;
+    
+    // Try to get overall rating if it exists
+    let overallRating: number | undefined;
+    if (idxOverallRating !== -1) {
+      const ratingRaw = (row[idxOverallRating] ?? "").trim();
+      overallRating = parseFloat(ratingRaw) || undefined;
+    }
+    
+    // Get comment (from your example: "Not acceptable you bil transferred the custom...")
+    const comment = (row[idxComment] ?? "").trim();
+    
+    // Get callId (phone number)
+    const called = (row[idxCalled] ?? "").trim();
+    
+    console.log("Parsed evaluation data:", {
+      agent: agent.name,
+      phoneEtiquette,
+      problemSolving,
+      productKnowledge,
+      fcr,
+      upselling,
+      promotion,
+      infoCapturing,
+      resolution,
+      score,
+      comment,
+      called
     });
+
+    // Create evaluation object
+    const evaluation: any = {
+      id: called || `eval-${Date.now()}-${Math.random()}`,
+      date: normalizeDate((row[idxEvalDate] ?? "").trim()),
+      evaluator: (row[idxEvaluator] ?? "").trim() || undefined,
+      called: called || undefined,
+      callType: (row[idxCallType] ?? "").trim() || undefined,
+      duration: durationStr || undefined,
+      durationSeconds: durationSeconds || undefined,
+      overallRating: overallRating,
+      score: score,
+      comments: comment || undefined,
+      kpis: {
+        product: productKnowledge,
+        etiquette: phoneEtiquette,
+        solving: problemSolving,
+        upsell: upselling,
+        promo: promotion,
+        capture: infoCapturing,
+      },
+    };
+
+    // Add FCR and Resolution if they exist
+    if (fcr > 0) evaluation.fcr = fcr;
+    if (resolution > 0) evaluation.resolution = resolution;
+
+    agent.evaluations.push(evaluation);
+    console.log(`Added evaluation for ${agent.name}, total evaluations now: ${agent.evaluations.length}`);
   });
 
   // 3) DailyStatsV1 (one row per agent per day)
   const dailyHeaders = dailyV1[0] ?? [];
-  const dIdx = headerIndex(dailyHeaders);
-  const idxDailyAgent = dIdx.get(["agent"]);
-  const idxDailyEmail = dIdx.get(["email"]);
-  const idxDailyDate = dIdx.get(["date"]);
-  const idxAnswered = dIdx.get(["answered calls", "answeredcalls", "answered"]);
-  const idxAbandoned = dIdx.get(["abandoned calls", "abandonedcalls", "abandoned"]);
-  const idxTransactions = dIdx.get(["transactions"]);
-  const idxAht = dIdx.get(["aht (sec)", "aht(sec)", "aht"]);
-  const idxResolutionRate = dIdx.get(["resolution rate"]);
-  const idxSolved = dIdx.get(["solved tickets", "solved"]);
-  const idxTotalTickets = dIdx.get(["total tickets", "totaltickets"]);
-  const idxInteractions = dIdx.get(["interactions"]);
-  const idxAvgResolution = dIdx.get(["avg resolution time (sec)", "average resolution time", "avg resolution time"]);
-  const idxEscalationRate = dIdx.get(["escalation rate"]);
-  const idxEscalated = dIdx.get(["escalated tickets", "escalated"]);
-  // Indexes for Debonairs Sales and Cheese Sales
-  const idxDebonairsSales = dIdx.get(["debsales", "deb sales", "debonairs", "deb"]);
-  const idxCheeseSales = dIdx.get(["cheese sales", "cheese"]);
-  const idxCreditsDiscounts = dIdx.get(["credits/discounts", "credits", "discounts"]);
+  const dIdx = getColumnIndices(dailyHeaders);
+  const idxDailyAgent = dIdx.findColumn(["agent"]);
+  const idxDailyEmail = dIdx.findColumn(["email"]);
+  const idxDailyDate = dIdx.findColumn(["date"]);
+  const idxAnswered = dIdx.findColumn(["answered calls", "answeredcalls", "answered"]);
+  const idxAbandoned = dIdx.findColumn(["abandoned calls", "abandonedcalls", "abandoned"]);
+  const idxTransactions = dIdx.findColumn(["transactions"]);
+  const idxAht = dIdx.findColumn(["aht (sec)", "aht(sec)", "aht"]);
+  const idxResolutionRate = dIdx.findColumn(["resolution rate"]);
+  const idxSolved = dIdx.findColumn(["solved tickets", "solved"]);
+  const idxTotalTickets = dIdx.findColumn(["total tickets", "totaltickets"]);
+  const idxInteractions = dIdx.findColumn(["interactions"]);
+  const idxAvgResolution = dIdx.findColumn(["avg resolution time (sec)", "average resolution time", "avg resolution time"]);
+  const idxEscalationRate = dIdx.findColumn(["escalation rate"]);
+  const idxEscalated = dIdx.findColumn(["escalated tickets", "escalated"]);
+  const idxDebonairsSales = dIdx.findColumn(["debsales", "deb sales", "debonairs", "deb"]);
+  const idxCheeseSales = dIdx.findColumn(["cheese sales", "cheese"]);
+  const idxCreditsDiscounts = dIdx.findColumn(["credits/discounts", "credits", "discounts"]);
 
   dailyV1.slice(1).forEach((row) => {
     const agentName = (row[idxDailyAgent] ?? "").trim();
@@ -210,7 +315,6 @@ export const fetchAllDashboardData = async () => {
     const ahtSeconds = parseTimeToSeconds((row[idxAht] ?? "").trim());
     const avgResolutionSeconds = parseTimeToSeconds((row[idxAvgResolution] ?? "").trim());
     
-    // Parse Debonairs Sales and Cheese Sales (raw values only, no calculation)
     const debonairsSales = parseMoney(row[idxDebonairsSales] ?? "");
     const cheeseSales = parseMoney(row[idxCheeseSales] ?? "");
     const creditsDiscounts = parseInt(row[idxCreditsDiscounts] ?? "0", 10) || 0;
@@ -233,12 +337,17 @@ export const fetchAllDashboardData = async () => {
         idxEscalated !== -1
           ? parseInt((row[idxEscalated] ?? "").trim(), 10) || 0
           : undefined,
-      // Store raw sales data only - no percentage calculation here
       debonairsSales: debonairsSales || undefined,
       cheeseSales: cheeseSales || undefined,
       creditsDiscounts: creditsDiscounts || undefined,
     });
   });
+
+  console.log("Final agents map:", Object.keys(agentsMap).map(email => ({
+    email,
+    name: agentsMap[email].name,
+    evaluationsCount: agentsMap[email].evaluations.length
+  })));
 
   return { agents: Object.values(agentsMap) };
 };
