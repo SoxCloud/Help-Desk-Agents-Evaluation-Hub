@@ -642,15 +642,15 @@ export const AdminDashboard: React.FC<Props> = ({
               <thead className="bg-slate-900/50 text-[9px] uppercase font-black text-slate-500 tracking-widest">
                 <tr>
                   <th className="px-3 py-3 text-left">AGENT</th>
+                  <th className="px-3 py-3 text-center">TKTS</th>
+                  <th className="px-3 py-3 text-center">INT/TKT</th>
+                  <th className="px-3 py-3 text-center">FCR%</th>
                   <th className="px-3 py-3 text-center">ANS</th>
                   <th className="px-3 py-3 text-center">ABN</th>
                   <th className="px-3 py-3 text-center">ABN%</th>
-                  <th className="px-3 py-3 text-center">TKTS</th>
-                  <th className="px-3 py-3 text-center">FCR%</th>
-                  <th className="px-3 py-3 text-center">INT/TKT</th>
-                  <th className="px-3 py-3 text-center">CSAT</th>
                   <th className="px-3 py-3 text-center">KPI</th>
                   <th className="px-3 py-3 text-center">CHEESE</th>
+                  <th className="px-3 py-3 text-center">CSAT</th>
                   <th className="px-3 py-3 text-center">CRED</th>
                   <th className="px-3 py-3 text-center">ACTION</th>
                 </tr>
@@ -746,6 +746,15 @@ export const AdminDashboard: React.FC<Props> = ({
                         </span>
                       </div>
                     </td>
+                    <td className="px-3 py-3 text-center font-black text-slate-300">
+                      {totalTickets}
+                    </td>
+                    <td className="px-3 py-3 text-center font-black text-cyan-400">
+                      {agentAvgInteractions}
+                    </td>
+                    <td className="px-3 py-3 text-center font-black text-green-400">
+                      {agentFcrAvg}%
+                    </td>
                     <td className="px-3 py-3 text-center font-black text-blue-400">
                       {totalAnswered}
                     </td>
@@ -760,18 +769,6 @@ export const AdminDashboard: React.FC<Props> = ({
                         {abandonedRate}%
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-center font-black text-slate-300">
-                      {totalTickets}
-                    </td>
-                    <td className="px-3 py-3 text-center font-black text-green-400">
-                      {agentFcrAvg}%
-                    </td>
-                    <td className="px-3 py-3 text-center font-black text-cyan-400">
-                      {agentAvgInteractions}
-                    </td>
-                    <td className="px-3 py-3 text-center font-black text-indigo-400">
-                      {latestScore}%
-                    </td>
                     <td className="px-3 py-3 text-center">
                       <span className={`font-black ${
                         agentKpiAvg >= 80 ? 'text-emerald-400' : 
@@ -782,6 +779,9 @@ export const AdminDashboard: React.FC<Props> = ({
                     </td>
                     <td className="px-3 py-3 text-center font-black text-amber-400">
                       {agentCheeseUpsell}%
+                    </td>
+                    <td className="px-3 py-3 text-center font-black text-indigo-400">
+                      {latestScore}%
                     </td>
                     <td className="px-3 py-3 text-center font-black text-purple-400">
                       {agentCredits}
