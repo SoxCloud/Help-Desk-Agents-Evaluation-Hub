@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { Agent, AgentEval } from "../types";  // Change Evaluation to AgentEval
+import { Agent, AgentEval, DailyStats } from "../types";
 
 const API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
@@ -7,14 +7,35 @@ if (!API_KEY) {
   console.warn("⚠️ VITE_GROQ_API_KEY is missing from .env file");
 }
 
-// List of currently available free models on Groq (as of March 2026)
 const AVAILABLE_MODELS = {
-  FAST: "llama-3.3-70b-versatile",     // Fast, versatile model
-  BALANCED: "llama-3.1-8b-instant",    // Good balance of speed and quality
-  POWERFUL: "mixtral-8x7b-32768",      // More powerful, slightly slower
+  FAST: "llama-3.3-70b-versatile",
+  BALANCED: "llama-3.1-8b-instant",
+  POWERFUL: "mixtral-8x7b-32768",
 };
 
-export const generateCoachingFeedback = async (agent: Agent, latestEval?: AgentEval) => {  // Change here too
+const calculateAgentStats = (history: DailyStats[]) => {
+  if (!history || history.length === 0) {
+    return { totalCalls: 0, totalTickets: 0, solvedTickets: 0, avgFCR: 0, avgResolution: 0 };
+  }
+  
+  const totals = history.reduce((acc, day) => ({
+    calls: acc.calls + (day.answeredCalls || 0) + (day.abandonedCalls || 0),
+    tickets: acc.tickets + (day.totalTickets || 0),
+    solved: acc.solved + (day.solvedTickets || 0),
+    fcr: acc.fcr + (day.fcr || 0),
+    resolutionTime: acc.resolutionTime + (day.avgResolutionSeconds || 0),
+  }), { calls: 0, tickets: 0, solved: 0, fcr: 0, resolutionTime: 0 });
+
+  return {
+    totalCalls: totals.calls,
+    totalTickets: totals.tickets,
+    solvedTickets: totals.solved,
+    avgFCR: history.length > 0 ? Math.round(totals.fcr / history.length) : 0,
+    avgResolution: history.length > 0 ? Math.round(totals.resolutionTime / history.length) : 0,
+  };
+};
+
+export const generateCoachingFeedback = async (agent: Agent, latestEval?: AgentEval, history?: DailyStats[]) => {
   if (!latestEval) {
     return "👋 Welcome! Complete an evaluation to receive personalized coaching.";
   }
@@ -24,27 +45,36 @@ export const generateCoachingFeedback = async (agent: Agent, latestEval?: AgentE
   }
 
   try {
+    const stats = history ? calculateAgentStats(history) : calculateAgentStats(agent.history || []);
+    
     const prompt = `
-      You are an expert Call Center Performance Coach. Analyze this agent's evaluation:
-      
-      Agent: ${agent.name}
-      Overall Score: ${latestEval.score}%
-      
-      Performance Metrics:
-      - Product Knowledge: ${latestEval.kpis?.product || 0}/100
-      - Phone Etiquette: ${latestEval.kpis?.etiquette || 0}/100
-      - Problem Solving: ${latestEval.kpis?.solving || 0}/100
-      - Upselling: ${latestEval.kpis?.upsell || 0}/100
-      - Promotion: ${latestEval.kpis?.promo || 0}/100
-      - Information Capture: ${latestEval.kpis?.capture || 0}/100
-      
-      Feedback: "${latestEval.comments || latestEval.positivePoints || ''}"
+You are an expert Call Center Performance Coach. Analyze this agent's performance data:
 
-      Write ONE concise, motivating paragraph (2-3 sentences) that:
-      1. Acknowledges their strongest skill
-      2. Provides ONE specific, actionable tip for improvement
-      3. Ends with an encouraging note
-    `;
+Agent: ${agent.name}
+
+📞 CALL & TICKET STATS:
+- Total Calls Handled: ${stats.totalCalls}
+- Total Tickets: ${stats.totalTickets}
+- Tickets Solved: ${stats.solvedTickets}
+- Average FCR (First Call Resolution): ${stats.avgFCR}%
+- Avg Resolution Time: ${stats.avgResolution} seconds
+
+📊 EVALUATION SCORES:
+- Overall CSAT: ${latestEval.score}%
+- Product Knowledge: ${latestEval.kpis?.product || 0}/100
+- Phone Etiquette: ${latestEval.kpis?.etiquette || 0}/100
+- Problem Solving: ${latestEval.kpis?.solving || 0}/100
+- Upselling: ${latestEval.kpis?.upsell || 0}/100
+- Promotion: ${latestEval.kpis?.promo || 0}/100
+- Information Capture: ${latestEval.kpis?.capture || 0}/100
+
+💬 Evaluator Feedback: "${latestEval.comments || latestEval.positivePoints || 'No comments'}"
+
+Write ONE concise, motivating paragraph (2-3 sentences) that:
+1. Mentions something they're doing well with calls/tickets OR evaluations
+2. Provides ONE specific, actionable tip for improvement
+3. Ends with an encouraging note
+`;
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -53,7 +83,6 @@ export const generateCoachingFeedback = async (agent: Agent, latestEval?: AgentE
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        // Using llama-3.1-8b-instant which is currently available
         model: "llama-3.1-8b-instant",
         messages: [
           { 
@@ -74,7 +103,6 @@ export const generateCoachingFeedback = async (agent: Agent, latestEval?: AgentE
       const errorData = await response.text();
       console.error("Groq API error:", errorData);
       
-      // Try fallback model if first one fails
       if (response.status === 400) {
         console.log("Trying fallback model...");
         const fallbackResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -84,7 +112,7 @@ export const generateCoachingFeedback = async (agent: Agent, latestEval?: AgentE
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: "mixtral-8x7b-32768", // Fallback model
+            model: "mixtral-8x7b-32768",
             messages: [
               { role: "system", content: "You are a professional call center coach providing brief, actionable feedback." },
               { role: "user", content: prompt }

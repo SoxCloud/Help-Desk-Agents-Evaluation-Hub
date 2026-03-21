@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Agent } from "../types";
+import { generateCoachingFeedback } from "../services/grokService";
 import {
   PhoneCall,
   Clock,
@@ -18,6 +19,8 @@ import {
   Zap,
   Percent,
   ShoppingCart,
+  X,
+  RefreshCw,
 } from "lucide-react";
 import {
   BarChart,
@@ -43,6 +46,10 @@ export const AdminDashboard: React.FC<Props> = ({
   onViewAgent,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiText, setAiText] = useState("");
+  const [aiError, setAiError] = useState("");
   const startDate = dateRange.start ? new Date(dateRange.start) : null;
   const endDate = dateRange.end ? new Date(dateRange.end) : null;
 
@@ -268,6 +275,35 @@ export const AdminDashboard: React.FC<Props> = ({
 
   const activeAgents = agentsWithFilteredHistory.filter((a) => a.history.length > 0).length;
 
+  const handleGenerateInsights = async () => {
+    setShowAiPanel(true);
+    setAiLoading(true);
+    setAiError("");
+    setAiText("");
+    
+    try {
+      const agentWithLowestScore = agentsWithFilteredHistory
+        .filter(a => a.evaluations.length > 0)
+        .sort((a, b) => {
+          const aScore = a.evaluations[a.evaluations.length - 1]?.score || 0;
+          const bScore = b.evaluations[b.evaluations.length - 1]?.score || 0;
+          return aScore - bScore;
+        })[0];
+      
+      if (agentWithLowestScore) {
+        const latestEval = agentWithLowestScore.evaluations[agentWithLowestScore.evaluations.length - 1];
+        const feedback = await generateCoachingFeedback(agentWithLowestScore, latestEval, agentWithLowestScore.history);
+        setAiText(feedback);
+      } else {
+        setAiText("No agent evaluations found. Add evaluations to generate insights.");
+      }
+    } catch (err) {
+      setAiError("Failed to generate insights. Please try again.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#1a2639] text-white">
       <div className="p-4 sm:p-6 lg:p-8 max-w-[2000px] mx-auto space-y-6">
@@ -305,7 +341,10 @@ export const AdminDashboard: React.FC<Props> = ({
                 />
               </div>
             </div>
-            <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors">
+            <button 
+              onClick={handleGenerateInsights}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors"
+            >
               <Activity size={14} /> AI Insights
             </button>
           </div>
@@ -829,6 +868,61 @@ export const AdminDashboard: React.FC<Props> = ({
           </div>
         </div>
       </div>
+
+      {/* AI Insights Panel */}
+      {showAiPanel && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setShowAiPanel(false)}>
+          <div 
+            className="bg-gradient-to-br from-indigo-900 to-purple-900 border border-indigo-500/30 p-6 rounded-2xl max-w-lg w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-600/30 rounded-xl">
+                  <Brain className="text-indigo-300" size={20} />
+                </div>
+                <h3 className="text-white font-bold">AI Coach Insights</h3>
+              </div>
+              <button 
+                onClick={() => setShowAiPanel(false)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+            
+            <div className="bg-slate-900/50 rounded-xl p-4 min-h-[100px]">
+              {aiLoading ? (
+                <div className="flex items-center justify-center gap-3 text-indigo-300">
+                  <RefreshCw className="animate-spin" size={20} />
+                  <span>Generating insights...</span>
+                </div>
+              ) : aiError ? (
+                <div className="text-amber-400 text-center">
+                  {aiError}
+                  <button 
+                    onClick={handleGenerateInsights}
+                    className="block mx-auto mt-2 text-sm text-indigo-400 hover:text-white underline"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : aiText ? (
+                <p className="text-indigo-100 leading-relaxed">"{aiText}"</p>
+              ) : null}
+            </div>
+            
+            <button 
+              onClick={handleGenerateInsights}
+              disabled={aiLoading}
+              className="w-full mt-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <RefreshCw size={14} className={aiLoading ? "animate-spin" : ""} />
+              Regenerate
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

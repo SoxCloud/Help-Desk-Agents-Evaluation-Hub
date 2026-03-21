@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { generateCoachingFeedback } from "../services/geminiService";
+import { generateCoachingFeedback } from "../services/grokService";
 import { Agent } from "../types";
 import {
   PhoneCall,
@@ -234,7 +234,7 @@ export const AgentDashboard: React.FC<Props> = ({
       setCoachError(null);
       
       try {
-        const feedback = await generateCoachingFeedback(agent, latestEval);
+        const feedback = await generateCoachingFeedback(agent, latestEval, agent.history);
         setCoachText(feedback);
       } catch (err) {
         console.error("Error fetching coaching feedback:", err);
@@ -255,7 +255,7 @@ export const AgentDashboard: React.FC<Props> = ({
     setCoachError(null);
     
     try {
-      const feedback = await generateCoachingFeedback(agent, latestEval);
+      const feedback = await generateCoachingFeedback(agent, latestEval, agent.history);
       setCoachText(feedback);
     } catch (err) {
       setCoachError("Refresh failed. Please try again.");
@@ -861,7 +861,7 @@ export const AgentDashboard: React.FC<Props> = ({
                       AI Performance Coach
                     </h4>
                     <p className="text-indigo-200 text-[8px] font-bold uppercase tracking-wider">
-                      Powered by Gemini AI
+                      Powered by Grok AI
                     </p>
                   </div>
                 </div>
