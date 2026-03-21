@@ -62,11 +62,17 @@ export const AdminDashboard: React.FC<Props> = ({
     }));
 
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return filtered;
-    return filtered.filter(
+    const result = !q ? filtered : filtered.filter(
       (a) =>
         a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q),
     );
+    
+    // Sort by total tickets (highest to lowest)
+    return result.sort((a, b) => {
+      const ticketsA = a.history.reduce((s, h) => s + (h.totalTickets || 0), 0);
+      const ticketsB = b.history.reduce((s, h) => s + (h.totalTickets || 0), 0);
+      return ticketsB - ticketsA;
+    });
   }, [agents, searchQuery, dateRange.start, dateRange.end]);
 
   // CALL STATS
