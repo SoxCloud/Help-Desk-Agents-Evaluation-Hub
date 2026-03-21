@@ -37,6 +37,7 @@ import {
   Ticket,
   BarChart4,
   Percent,
+  ShoppingCart,
 } from "lucide-react";
 
 interface Props {
@@ -193,6 +194,12 @@ export const AgentDashboard: React.FC<Props> = ({
   // Calculate total Credits/Discounts count for this agent
   const totalCreditsDiscounts = filteredHistory.reduce(
     (sum, h) => sum + (h.creditsDiscounts || 0),
+    0,
+  );
+
+  // Calculate total Transactions for this agent
+  const totalTransactions = filteredHistory.reduce(
+    (sum, h) => sum + (h.transactions || 0),
     0,
   );
 
@@ -570,6 +577,13 @@ export const AgentDashboard: React.FC<Props> = ({
                 sub="total given"
                 icon={<Percent />}
                 color="from-purple-500 to-pink-500"
+              />
+              <PremiumStatCard
+                title="Transactions"
+                value={totalTransactions}
+                sub="total completed"
+                icon={<ShoppingCart />}
+                color="from-teal-500 to-cyan-500"
               />
             </div>
 

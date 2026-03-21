@@ -17,6 +17,7 @@ import {
   Ticket,
   Zap,
   Percent,
+  ShoppingCart,
 } from "lucide-react";
 import {
   BarChart,
@@ -194,6 +195,13 @@ export const AdminDashboard: React.FC<Props> = ({
   const avgInteractionsPerTicket = totalTicketsForInteractions > 0
     ? (totalInteractions / totalTicketsForInteractions).toFixed(1)
     : "0";
+
+  // Total transactions
+  const totalTransactions = agentsWithFilteredHistory.reduce(
+    (sum, a) =>
+      sum + a.history.reduce((inner, h) => inner + (h.transactions || 0), 0),
+    0,
+  );
 
   // Calculate FCR (First Call Resolution) - average percentage across all agents
   const totalFCR = agentsWithFilteredHistory.reduce(
@@ -421,6 +429,15 @@ export const AdminDashboard: React.FC<Props> = ({
             value={totalCreditsDiscounts}
             change="Total given"
            icon={<Ticket className="text-purple-400" />}
+            showPercentage={false}
+          />
+          
+          {/* TRANSACTIONS CARD */}
+          <MetricCard
+            title="Transactions"
+            value={totalTransactions}
+            change="Total"
+            icon={<ShoppingCart className="text-teal-400" />}
             showPercentage={false}
           />
         </div>
@@ -652,6 +669,7 @@ export const AdminDashboard: React.FC<Props> = ({
                   <th className="px-3 py-3 text-center">CHEESE</th>
                   <th className="px-3 py-3 text-center">CSAT</th>
                   <th className="px-3 py-3 text-center">CRED</th>
+                  <th className="px-3 py-3 text-center">TRANS</th>
                   <th className="px-3 py-3 text-center">ACTION</th>
                 </tr>
               </thead>
@@ -702,6 +720,12 @@ export const AdminDashboard: React.FC<Props> = ({
                     0,
                   );
                   
+                  // Calculate transactions for this agent
+                  const agentTransactions = agent.history.reduce(
+                    (s, h) => s + (h.transactions || 0),
+                    0,
+                  );
+                   
                   const latestScore =
                     agent.evaluations.length > 0
                       ? agent.evaluations[agent.evaluations.length - 1]?.score
@@ -785,6 +809,9 @@ export const AdminDashboard: React.FC<Props> = ({
                     </td>
                     <td className="px-3 py-3 text-center font-black text-purple-400">
                       {agentCredits}
+                    </td>
+                    <td className="px-3 py-3 text-center font-black text-teal-400">
+                      {agentTransactions}
                     </td>
                     <td className="px-3 py-3 text-center">
                       <button
