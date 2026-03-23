@@ -42,9 +42,10 @@ import {
 
 interface Props {
   agent: Agent;
+  agents?: Agent[];
   dateRange: { start: string; end: string };
   onDateChange: (range: { start: string; end: string }) => void;
-  viewMode: "stats" | "evaluations";
+  viewMode: "stats" | "evaluations" | "agentStats";
   onBack?: () => void;
   showToggle?: boolean;
   onToggleView?: (mode: "stats" | "evaluations") => void;
@@ -52,6 +53,7 @@ interface Props {
 
 export const AgentDashboard: React.FC<Props> = ({
   agent,
+  agents = [],
   dateRange,
   onDateChange,
   viewMode,
@@ -405,10 +407,10 @@ export const AgentDashboard: React.FC<Props> = ({
             {onBack && (
               <button
                 onClick={onBack}
-                title="Go back"
+                aria-label="Go back"
                 className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white hover:bg-white/20 hover:scale-110 transition-all duration-300"
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={20} aria-hidden="true" />
               </button>
             )}
             <div>
@@ -433,10 +435,10 @@ export const AgentDashboard: React.FC<Props> = ({
             {/* Export button */}
             <button
               onClick={exportData}
-              title="Export data"
+              aria-label="Export data"
               className="p-2 bg-white/10 backdrop-blur-md rounded-xl hover:bg-white/20 transition-all border border-white/20"
             >
-              <Download size={16} className="text-white" />
+              <Download size={16} className="text-white" aria-hidden="true" />
             </button>
 
             {/* Date picker */}
@@ -468,7 +470,7 @@ export const AgentDashboard: React.FC<Props> = ({
               <div className="flex bg-white/10 backdrop-blur-md p-1 rounded-2xl border border-white/20">
                 <button
                   onClick={() => onToggleView("stats")}
-                  title="Switch to stats view"
+                  aria-label="Switch to stats view"
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                     viewMode === "stats" 
                       ? "bg-white text-indigo-700 shadow-lg" 
@@ -479,7 +481,7 @@ export const AgentDashboard: React.FC<Props> = ({
                 </button>
                 <button
                   onClick={() => onToggleView("evaluations")}
-                  title="Switch to calls view"
+                  aria-label="Switch to calls view"
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                     viewMode === "evaluations" 
                       ? "bg-white text-indigo-700 shadow-lg" 
@@ -590,9 +592,10 @@ export const AgentDashboard: React.FC<Props> = ({
             {/* Trend Chart Toggle */}
             <button
               onClick={() => setShowTrends(!showTrends)}
+              aria-label={showTrends ? 'Hide performance trend' : 'Show performance trend'}
               className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-xs font-bold transition-colors"
             >
-              <BarChart3 size={16} />
+              <BarChart3 size={16} aria-hidden="true" />
               {showTrends ? 'Hide' : 'Show'} Performance Trend
             </button>
 
@@ -639,7 +642,7 @@ export const AgentDashboard: React.FC<Props> = ({
                       <button
                         key={i}
                         onClick={() => setTipIndex(i)}
-                        title={`Tip ${i + 1}`}
+                        aria-label={`Tip ${i + 1}`}
                         className={`h-1 rounded-full transition-all ${
                           i === tipIndex ? 'w-4 bg-indigo-400' : 'w-2 bg-slate-600'
                         }`}
@@ -653,31 +656,31 @@ export const AgentDashboard: React.FC<Props> = ({
             {/* Quick Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <button 
-                title="Export report"
+                aria-label="Export report"
                 className="bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group"
               >
-                <Download size={20} className="group-hover:scale-110 transition" />
+                <Download size={20} className="group-hover:scale-110 transition" aria-hidden="true" />
                 <span className="text-[10px] font-bold">Export Report</span>
               </button>
               <button 
-                title="Share progress"
+                aria-label="Share progress"
                 className="bg-emerald-600 hover:bg-emerald-500 text-white p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group"
               >
-                <Share2 size={20} className="group-hover:scale-110 transition" />
+                <Share2 size={20} className="group-hover:scale-110 transition" aria-hidden="true" />
                 <span className="text-[10px] font-bold">Share Progress</span>
               </button>
               <button 
-                title="Save goal"
+                aria-label="Save goal"
                 className="bg-purple-600 hover:bg-purple-500 text-white p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group"
               >
-                <Bookmark size={20} className="group-hover:scale-110 transition" />
+                <Bookmark size={20} className="group-hover:scale-110 transition" aria-hidden="true" />
                 <span className="text-[10px] font-bold">Save Goal</span>
               </button>
               <button 
-                title="Set alert"
+                aria-label="Set alert"
                 className="bg-amber-600 hover:bg-amber-500 text-white p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group"
               >
-                <Bell size={20} className="group-hover:scale-110 transition" />
+                <Bell size={20} className="group-hover:scale-110 transition" aria-hidden="true" />
                 <span className="text-[10px] font-bold">Set Alert</span>
               </button>
             </div>
@@ -868,10 +871,10 @@ export const AgentDashboard: React.FC<Props> = ({
                 {latestEval && !coachLoading && (
                   <button
                     onClick={handleRefreshCoach}
-                    title="Refresh insights"
+                    aria-label="Refresh AI insights"
                     className="p-2 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
                   >
-                    <RefreshCw size={16} className="text-indigo-300" />
+                    <RefreshCw size={16} className="text-indigo-300" aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -887,6 +890,7 @@ export const AgentDashboard: React.FC<Props> = ({
                     {coachError}
                     <button 
                       onClick={handleRefreshCoach}
+                      aria-label="Try again"
                       className="block mx-auto mt-2 text-xs text-indigo-300 hover:text-white underline"
                     >
                       Try again
@@ -905,7 +909,7 @@ export const AgentDashboard: React.FC<Props> = ({
               
               <button 
                 className="w-full mt-6 py-3 bg-white text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 transition-colors"
-                title="View detailed analysis"
+                aria-label="View detailed analysis"
               >
                 Deep Dive Insights →
               </button>
@@ -919,22 +923,22 @@ export const AgentDashboard: React.FC<Props> = ({
               </h4>
               <div className="flex gap-2 justify-between">
                 {[
-                  { mood: 'great', emoji: '🚀', label: 'Great', title: 'Feeling great' },
-                  { mood: 'good', emoji: '😊', label: 'Good', title: 'Feeling good' },
-                  { mood: 'okay', emoji: '😐', label: 'Okay', title: 'Feeling okay' },
-                  { mood: 'tired', emoji: '😴', label: 'Tired', title: 'Feeling tired' },
+                  { mood: 'great', emoji: '🚀', label: 'Great' },
+                  { mood: 'good', emoji: '😊', label: 'Good' },
+                  { mood: 'okay', emoji: '😐', label: 'Okay' },
+                  { mood: 'tired', emoji: '😴', label: 'Tired' },
                 ].map((item) => (
                   <button
                     key={item.mood}
                     onClick={() => setMood(item.mood as any)}
-                    title={item.title}
+                    aria-label={`Feeling ${item.label.toLowerCase()}`}
                     className={`flex-1 p-3 rounded-xl text-center transition-all ${
                       mood === item.mood
                         ? 'bg-indigo-600 text-white scale-105'
                         : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700'
                     }`}
                   >
-                    <span className="text-lg block mb-1">{item.emoji}</span>
+                    <span className="text-lg block mb-1" aria-hidden="true">{item.emoji}</span>
                     <span className="text-[8px] font-bold">{item.label}</span>
                   </button>
                 ))}
@@ -955,8 +959,8 @@ export const AgentDashboard: React.FC<Props> = ({
                 </h4>
                 <button 
                   onClick={() => setIsEditingGoals(!isEditingGoals)}
+                  aria-label={isEditingGoals ? "Save goals" : "Edit your goals"}
                   className="text-[10px] text-indigo-400 hover:text-indigo-300"
-                  title={isEditingGoals ? "Save goals" : "Edit your goals"}
                 >
                   {isEditingGoals ? "Save" : "Edit Goals"}
                 </button>
@@ -1028,6 +1032,7 @@ export const AgentDashboard: React.FC<Props> = ({
                       setIsEditingGoals(false);
                       localStorage.setItem('agentGoals', JSON.stringify(editableGoals));
                     }}
+                    aria-label="Save changes"
                     className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold transition-colors"
                   >
                     Save Changes
@@ -1037,6 +1042,7 @@ export const AgentDashboard: React.FC<Props> = ({
                       setEditableGoals(goals);
                       setIsEditingGoals(false);
                     }}
+                    aria-label="Cancel editing"
                     className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-xs font-bold transition-colors"
                   >
                     Cancel
@@ -1087,6 +1093,89 @@ export const AgentDashboard: React.FC<Props> = ({
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      ) : viewMode === "agentStats" ? (
+        /* AGENT STATS VIEW */
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 p-6 rounded-2xl shadow-xl">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Trophy size={20} /> Agent Performance Comparison
+            </h2>
+            <p className="text-indigo-200 text-sm mt-1">See how you stack up against the team</p>
+          </div>
+          
+          <div className="bg-[#1e293b] border border-slate-800 rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead className="bg-slate-900/50 text-[9px] uppercase font-black text-slate-500 tracking-widest">
+                  <tr>
+                    <th className="px-3 py-3 text-left">AGENT</th>
+                    <th className="px-3 py-3 text-center">TICKETS</th>
+                    <th className="px-3 py-3 text-center">SOLVED</th>
+                    <th className="px-3 py-3 text-center">CALLS</th>
+                    <th className="px-3 py-3 text-center">ABN%</th>
+                    <th className="px-3 py-3 text-center">CSAT</th>
+                    <th className="px-3 py-3 text-center">CHEESE</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/50">
+                  {[...agents]
+                    .sort((a, b) => {
+                      const ticketsA = a.history.reduce((s, h) => s + (h.totalTickets || 0), 0);
+                      const ticketsB = b.history.reduce((s, h) => s + (h.totalTickets || 0), 0);
+                      return ticketsB - ticketsA;
+                    })
+                    .map((a) => {
+                      const latestScore = a.evaluations.length > 0 
+                        ? a.evaluations[a.evaluations.length - 1]?.score || 0 
+                        : 0;
+                      const totalCalls = a.history.reduce((s, h) => s + (h.answeredCalls || 0), 0);
+                      const totalAbandoned = a.history.reduce((s, h) => s + (h.abandonedCalls || 0), 0);
+                      const abandonedRate = totalCalls > 0 ? ((totalAbandoned / totalCalls) * 100).toFixed(1) : "0";
+                      const totalTickets = a.history.reduce((s, h) => s + (h.totalTickets || 0), 0);
+                      const solved = a.history.reduce((s, h) => s + (h.solvedTickets || 0), 0);
+                      const debSales = a.history.reduce((s, h) => s + (h.debonairsSales || 0), 0);
+                      const cheeseSales = a.history.reduce((s, h) => s + (h.cheeseSales || 0), 0);
+                      const cheeseUpsell = debSales > cheeseSales ? ((cheeseSales / (debSales - cheeseSales)) * 100).toFixed(1) : "0";
+                      const isMe = a.email.toLowerCase() === agent.email.toLowerCase();
+                      
+                      return (
+                        <tr key={a.id} className={`hover:bg-indigo-500/5 transition-colors ${isMe ? 'bg-indigo-500/10' : ''}`}>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-[8px] font-black text-white">
+                                {a.name.split(" ").map(n => n[0]).join("")}
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-200">
+                                {a.name.split(' ')[0]} {isMe && <span className="text-indigo-400">(You)</span>}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-center font-black text-slate-300">
+                            {totalTickets}
+                          </td>
+                          <td className="px-3 py-3 text-center font-black text-emerald-400">
+                            {solved}
+                          </td>
+                          <td className="px-3 py-3 text-center font-black text-blue-400">
+                            {totalCalls}
+                          </td>
+                          <td className="px-3 py-3 text-center font-black text-amber-400">
+                            {abandonedRate}%
+                          </td>
+                          <td className="px-3 py-3 text-center font-black text-indigo-400">
+                            {latestScore}%
+                          </td>
+                          <td className="px-3 py-3 text-center font-black text-amber-400">
+                            {cheeseUpsell}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

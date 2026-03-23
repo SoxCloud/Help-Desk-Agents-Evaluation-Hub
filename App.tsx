@@ -321,9 +321,10 @@ const App: React.FC = () => {
               return (
                 <AgentDashboard
                   agent={foundAgent}
+                  agents={agents}
                   dateRange={dateRange}
                   onDateChange={setDateRange}
-                  viewMode={activeTab === 'evaluations' ? 'evaluations' : 'stats'}
+                  viewMode={activeTab === 'evaluations' ? 'evaluations' : activeTab === 'agentStats' ? 'agentStats' : 'stats'}
                 />
               );
             })()

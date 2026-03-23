@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, BarChart3, Moon, Sun, LogOut, PlayCircle } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart3, Moon, Sun, LogOut, PlayCircle, Trophy } from 'lucide-react';
 import { User, UserRole } from '../types';
 
 export const Sidebar = ({ user, activeTab, setActiveTab, onLogout, isDarkMode, toggleTheme }: any) => {
@@ -12,6 +12,7 @@ export const Sidebar = ({ user, activeTab, setActiveTab, onLogout, isDarkMode, t
     : [
         { id: 'dashboard', label: 'My Dashboard', icon: LayoutDashboard },
         { id: 'evaluations', label: 'Evaluated Calls', icon: PlayCircle },
+        { id: 'agentStats', label: 'Agents Stats', icon: Trophy },
       ];
 
   return (
@@ -41,6 +42,7 @@ export const Sidebar = ({ user, activeTab, setActiveTab, onLogout, isDarkMode, t
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
+            aria-label={item.label}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
               activeTab === item.id
                 ? 'bg-indigo-600 text-white shadow-lg'
@@ -49,7 +51,7 @@ export const Sidebar = ({ user, activeTab, setActiveTab, onLogout, isDarkMode, t
                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }`}
           >
-            <item.icon size={20} />
+            <item.icon size={20} aria-hidden="true" />
             {item.label}
           </button>
         ))}
@@ -60,12 +62,13 @@ export const Sidebar = ({ user, activeTab, setActiveTab, onLogout, isDarkMode, t
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
+          aria-label="Toggle theme"
           className={`w-full flex items-center justify-between px-4 py-2 rounded-xl text-xs font-bold ${
             isDarkMode ? 'bg-slate-900 text-slate-400' : 'bg-slate-100 text-slate-700'
           }`}
         >
           <span>{isDarkMode ? 'LIGHT MODE' : 'DARK MODE'}</span>
-          {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+          {isDarkMode ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
         </button>
 
         {/* User Info with email */}
@@ -84,9 +87,10 @@ export const Sidebar = ({ user, activeTab, setActiveTab, onLogout, isDarkMode, t
         {/* Sign Out Button */}
         <button
           onClick={onLogout}
+          aria-label="Sign out"
           className="w-full flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-500/10 rounded-xl text-xs font-bold transition-all"
         >
-          <LogOut size={16} /> Sign Out
+          <LogOut size={16} aria-hidden="true" /> Sign Out
         </button>
       </div>
     </aside>

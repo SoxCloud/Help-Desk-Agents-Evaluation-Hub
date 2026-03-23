@@ -343,9 +343,10 @@ export const AdminDashboard: React.FC<Props> = ({
             </div>
             <button 
               onClick={handleGenerateInsights}
+              aria-label="Generate AI Insights"
               className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors"
             >
-              <Activity size={14} /> AI Insights
+              <Activity size={14} aria-hidden="true" /> AI Insights
             </button>
           </div>
         </div>
@@ -856,6 +857,8 @@ export const AdminDashboard: React.FC<Props> = ({
                       <button
                         onClick={() => onViewAgent(agent.id)}
                         className="bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white px-2 py-1 rounded-md text-[8px] font-bold transition-all whitespace-nowrap"
+                        title={`View performance details for ${agent.name}`}
+                        aria-label={`View performance details for ${agent.name}`}
                       >
                         VIEW
                       </button>
@@ -885,9 +888,10 @@ export const AdminDashboard: React.FC<Props> = ({
               </div>
               <button 
                 onClick={() => setShowAiPanel(false)}
+                aria-label="Close AI Insights"
                 className="p-2 hover:bg-white/10 rounded-lg transition-colors"
               >
-                <X size={18} className="text-slate-400" />
+                <X size={18} className="text-slate-400" aria-hidden="true" />
               </button>
             </div>
             
@@ -902,6 +906,7 @@ export const AdminDashboard: React.FC<Props> = ({
                   {aiError}
                   <button 
                     onClick={handleGenerateInsights}
+                    aria-label="Try again"
                     className="block mx-auto mt-2 text-sm text-indigo-400 hover:text-white underline"
                   >
                     Try again
@@ -915,9 +920,10 @@ export const AdminDashboard: React.FC<Props> = ({
             <button 
               onClick={handleGenerateInsights}
               disabled={aiLoading}
+              aria-label="Regenerate AI Insights"
               className="w-full mt-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
             >
-              <RefreshCw size={14} className={aiLoading ? "animate-spin" : ""} />
+              <RefreshCw size={14} className={aiLoading ? "animate-spin" : ""} aria-hidden="true" />
               Regenerate
             </button>
           </div>
