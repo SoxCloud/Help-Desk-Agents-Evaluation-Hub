@@ -96,9 +96,12 @@ Write ONE concise, motivating paragraph (2-3 sentences) that:
         ],
         temperature: 0.7,
         max_tokens: 150
-      })
+      }),
+      mode: 'cors'
     });
 
+    console.log("Groq API response status:", response.status);
+    
     if (!response.ok) {
       const errorData = await response.text();
       console.error("Groq API error:", errorData);
@@ -135,7 +138,13 @@ Write ONE concise, motivating paragraph (2-3 sentences) that:
     return data.choices[0].message.content.trim();
     
   } catch (error: any) {
-    console.error("Groq API Error:", error);
-    return "✨ The AI Coach is taking a quick break. Please try again in a moment!";
+    console.error("Groq API Error:", error.message || error);
+    if (!API_KEY) {
+      return "⚠️ AI Coach not configured. Please add VITE_GROQ_API_KEY to .env file.";
+    }
+    if (error.message?.includes('CORS') || error.message?.includes('fetch')) {
+      return "⚠️ CORS issue detected. For local development, please use a CORS proxy or deploy the app.";
+    }
+    return "⚠️ AI Coach is having trouble connecting. Please try again in a moment.";
   }
 };
