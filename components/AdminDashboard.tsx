@@ -111,10 +111,9 @@ export const AdminDashboard: React.FC<Props> = ({
 
   const totalTeamScore = allEvaluations.reduce((sum, e) => {
     const kpi = e.kpis || {};
-    return sum + (kpi.product || 0) + (kpi.etiquette || 0) + (kpi.solving || 0) + 
-           (kpi.upsell || 0) + (kpi.promo || 0) + (kpi.capture || 0);
+    return sum + (kpi.product || 0) + (kpi.etiquette || 0) + (kpi.solving || 0);
   }, 0);
-  const totalEvaluatedCalls = allEvaluations.length * 6;
+  const totalEvaluatedCalls = allEvaluations.length * 3;
 
   const teamAverageScore =
     totalEvaluatedCalls > 0
@@ -243,39 +242,51 @@ export const AdminDashboard: React.FC<Props> = ({
     })(),
   })).sort((a, b) => b.total - a.total);
 
-  // OVERALL KPI SCORES - Calculate average of each KPI across all agents
+  // OVERALL KPI SCORES - Calculate average of each KPI across all agents (only for evals with that KPI scored)
   const kpiAverages = useMemo(() => {
     let totalProduct = 0;
     let totalEtiquette = 0;
     let totalSolving = 0;
-    let totalUpsell = 0;
-    let totalPromo = 0;
-    let totalCapture = 0;
+    let totalResolution = 0;
     let totalFCR = 0;
-    let evalCount = 0;
+    let countProduct = 0;
+    let countEtiquette = 0;
+    let countSolving = 0;
+    let countResolution = 0;
+    let countFCR = 0;
 
     agentsWithFilteredHistory.forEach(agent => {
       agent.evaluations.forEach(evalItem => {
-        totalProduct += evalItem.kpis.product || 0;
-        totalEtiquette += evalItem.kpis.etiquette || 0;
-        totalSolving += evalItem.kpis.solving || 0;
-        totalUpsell += evalItem.kpis.upsell || 0;
-        totalPromo += evalItem.kpis.promo || 0;
-        totalCapture += evalItem.kpis.capture || 0;
-        totalFCR += evalItem.fcr || 0;
-        evalCount++;
+        if (evalItem.kpis.product !== undefined) {
+          totalProduct += evalItem.kpis.product;
+          countProduct++;
+        }
+        if (evalItem.kpis.etiquette !== undefined) {
+          totalEtiquette += evalItem.kpis.etiquette;
+          countEtiquette++;
+        }
+        if (evalItem.kpis.solving !== undefined) {
+          totalSolving += evalItem.kpis.solving;
+          countSolving++;
+        }
+        if (evalItem.kpis.resolution !== undefined) {
+          totalResolution += evalItem.kpis.resolution;
+          countResolution++;
+        }
+        if (evalItem.fcr !== undefined && evalItem.fcr > 0) {
+          totalFCR += evalItem.fcr;
+          countFCR++;
+        }
       });
     });
 
     return {
-      product: evalCount > 0 ? Math.round(totalProduct / evalCount) : 0,
-      etiquette: evalCount > 0 ? Math.round(totalEtiquette / evalCount) : 0,
-      solving: evalCount > 0 ? Math.round(totalSolving / evalCount) : 0,
-      upsell: evalCount > 0 ? Math.round(totalUpsell / evalCount) : 0,
-      promo: evalCount > 0 ? Math.round(totalPromo / evalCount) : 0,
-      capture: evalCount > 0 ? Math.round(totalCapture / evalCount) : 0,
-      fcr: evalCount > 0 ? Math.round(totalFCR / evalCount) : 0,
-      totalEvals: evalCount,
+      product: countProduct > 0 ? Math.round(totalProduct / countProduct) : undefined,
+      etiquette: countEtiquette > 0 ? Math.round(totalEtiquette / countEtiquette) : undefined,
+      solving: countSolving > 0 ? Math.round(totalSolving / countSolving) : undefined,
+      resolution: countResolution > 0 ? Math.round(totalResolution / countResolution) : undefined,
+      fcr: countFCR > 0 ? Math.round(totalFCR / countFCR) : undefined,
+      totalEvals: agentsWithFilteredHistory.reduce((sum, a) => sum + a.evaluations.length, 0),
     };
   }, [agentsWithFilteredHistory]);
 
@@ -629,7 +640,7 @@ export const AdminDashboard: React.FC<Props> = ({
             </span>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <KPICard
               label="Product"
               value={kpiAverages.product}
@@ -649,22 +660,10 @@ export const AdminDashboard: React.FC<Props> = ({
               color="from-purple-500 to-purple-600"
             />
             <KPICard
-              label="Upsell"
-              value={kpiAverages.upsell}
-              icon={<TrendingUp className="text-emerald-400" size={18} />}
+              label="Resolution"
+              value={kpiAverages.resolution}
+              icon={<CheckCircle className="text-emerald-400" size={18} />}
               color="from-emerald-500 to-emerald-600"
-            />
-            <KPICard
-              label="Promo"
-              value={kpiAverages.promo}
-              icon={<Star className="text-amber-400" size={18} />}
-              color="from-amber-500 to-amber-600"
-            />
-            <KPICard
-              label="Capture"
-              value={kpiAverages.capture}
-              icon={<CheckCircle className="text-rose-400" size={18} />}
-              color="from-rose-500 to-rose-600"
             />
             <KPICard
               label="FCR"

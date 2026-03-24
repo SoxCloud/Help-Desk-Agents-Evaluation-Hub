@@ -146,9 +146,6 @@ export const fetchAllDashboardData = async () => {
   const idxProblemSolving = eIdx.findColumn(["problemSolvingScore"]);
   const idxProductKnowledge = eIdx.findColumn(["productKnowledgeScore"]);
   const idxFCR = eIdx.findColumn(["FCR"]);
-  const idxUpselling = eIdx.findColumn(["upsellingScore"]);
-  const idxPromotion = eIdx.findColumn(["promotionScore"]);
-  const idxInfoCapturing = eIdx.findColumn(["infoCapturingScore"]);
   const idxResolution = eIdx.findColumn(["Resolution outcome", "Resolution"]);
   const idxComment = eIdx.findColumn(["evaluatorComment"]);
   
@@ -168,9 +165,6 @@ export const fetchAllDashboardData = async () => {
     problemSolving: idxProblemSolving,
     productKnowledge: idxProductKnowledge,
     fcr: idxFCR,
-    upselling: idxUpselling,
-    promotion: idxPromotion,
-    infoCapturing: idxInfoCapturing,
     resolution: idxResolution,
     comment: idxComment,
     overallRating: idxOverallRating
@@ -212,23 +206,18 @@ export const fetchAllDashboardData = async () => {
     const rawPhoneEtiquette = (row[idxPhoneEtiquette] ?? "").trim();
     const rawProblemSolving = (row[idxProblemSolving] ?? "").trim();
     const rawProductKnowledge = (row[idxProductKnowledge] ?? "").trim();
-    const rawUpselling = (row[idxUpselling] ?? "").trim();
-    const rawPromotion = (row[idxPromotion] ?? "").trim();
-    const rawInfoCapturing = (row[idxInfoCapturing] ?? "").trim();
+    const rawResolution = (row[idxResolution] ?? "").trim();
     
     const phoneEtiquette = rawPhoneEtiquette ? parseInt(rawPhoneEtiquette, 10) || 0 : undefined;
     const problemSolving = rawProblemSolving ? parseInt(rawProblemSolving, 10) || 0 : undefined;
     const productKnowledge = rawProductKnowledge ? parseInt(rawProductKnowledge, 10) || 0 : undefined;
-    const upselling = rawUpselling ? parseInt(rawUpselling, 10) || 0 : undefined;
-    const promotion = rawPromotion ? parseInt(rawPromotion, 10) || 0 : undefined;
-    const infoCapturing = rawInfoCapturing ? parseInt(rawInfoCapturing, 10) || 0 : undefined;
+    const resolution = rawResolution ? parseInt(rawResolution, 10) || 0 : undefined;
     
     const fcrRaw = (row[idxFCR] ?? "").trim().replace('%', '');
     const fcr = fcrRaw ? parseFloat(fcrRaw) || 0 : 0;
-    const resolution = parseInt((row[idxResolution] ?? "0").trim(), 10) || 0;
     
-    // Calculate overall score as average of ONLY the KPIs that were scored (exclude N/A)
-    const scoredKpis = [phoneEtiquette, problemSolving, productKnowledge, upselling, promotion, infoCapturing].filter(v => v !== undefined);
+    // Calculate overall score as average of Phone Etiquette, Problem Solving, Product Knowledge, FCR, Resolution
+    const scoredKpis = [phoneEtiquette, problemSolving, productKnowledge, fcr, resolution].filter(v => v !== undefined);
     const score = scoredKpis.length > 0 ? Math.round(scoredKpis.reduce((a, b) => a + b, 0) / scoredKpis.length) : 0;
     
     // Try to get overall rating if it exists
@@ -244,7 +233,7 @@ export const fetchAllDashboardData = async () => {
     // Get callId (phone number)
     const called = (row[idxCalled] ?? "").trim();
     
-    console.log(`[EVAL] ${agent.name}: FCR=${fcr}, upselling=${upselling}`);
+    console.log(`[EVAL] ${agent.name}: FCR=${fcr}`);
 
     // Create evaluation object
     const evaluation: any = {
@@ -263,15 +252,12 @@ export const fetchAllDashboardData = async () => {
         product: productKnowledge,
         etiquette: phoneEtiquette,
         solving: problemSolving,
-        upsell: upselling,
-        promo: promotion,
-        capture: infoCapturing,
+        resolution: resolution,
       },
     };
 
-    // Add FCR and Resolution if they exist
+    // Add FCR if it exists
     if (fcr > 0) evaluation.fcr = fcr;
-    if (resolution > 0) evaluation.resolution = resolution;
 
     agent.evaluations.push(evaluation);
     console.log(`Added evaluation for ${agent.name}, total evaluations now: ${agent.evaluations.length}`);

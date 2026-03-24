@@ -35,12 +35,10 @@ export interface DailyStats {
 }
 
 export interface Kpis {
-  capture?: number;
   etiquette?: number;
   solving?: number;
   product?: number;
-  promo?: number;
-  upsell?: number;
+  resolution?: number;
 }
 
 export interface AgentEval {

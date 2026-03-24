@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { generateCoachingFeedback } from "../services/grokService";
 import { Agent } from "../types";
 import {
@@ -128,21 +128,39 @@ export const AgentDashboard: React.FC<Props> = ({
       ? filteredEvaluations[filteredEvaluations.length - 1]
       : (agent.evaluations || [])[agent.evaluations?.length - 1];
 
-  const kpis = latestEval?.kpis || {
-    capture: 0,
-    etiquette: 0,
-    solving: 0,
-    product: 0,
-    upsell: 0,
-    promo: 0,
-  };
-  const currentScore = latestEval?.score || 0;
-
-  const totalEvaluations = filteredEvaluations.length || agent.evaluations?.length || 0;
-  const totalScore = (filteredEvaluations.length
+  const evaluationsToUse = filteredEvaluations.length > 0
     ? filteredEvaluations
-    : (agent.evaluations || [])
-  ).reduce((sum, evalItem) => sum + (evalItem.score || 0), 0);
+    : (agent.evaluations || []);
+
+  const totalEvaluations = evaluationsToUse.length;
+  const totalScore = evaluationsToUse.reduce((sum, evalItem) => sum + (evalItem.score || 0), 0);
+  const currentScore = totalEvaluations > 0 ? Math.round(totalScore / totalEvaluations) : 0;
+
+  const avgKpis = useMemo(() => {
+    let totalProduct = 0, totalEtiquette = 0, totalSolving = 0, totalResolution = 0;
+    let countProduct = 0, countEtiquette = 0, countSolving = 0, countResolution = 0;
+    
+    evaluationsToUse.forEach(e => {
+      if (e.kpis.product !== undefined) { totalProduct += e.kpis.product; countProduct++; }
+      if (e.kpis.etiquette !== undefined) { totalEtiquette += e.kpis.etiquette; countEtiquette++; }
+      if (e.kpis.solving !== undefined) { totalSolving += e.kpis.solving; countSolving++; }
+      if (e.kpis.resolution !== undefined) { totalResolution += e.kpis.resolution; countResolution++; }
+    });
+
+    return {
+      product: countProduct > 0 ? Math.round(totalProduct / countProduct) : undefined,
+      etiquette: countEtiquette > 0 ? Math.round(totalEtiquette / countEtiquette) : undefined,
+      solving: countSolving > 0 ? Math.round(totalSolving / countSolving) : undefined,
+      resolution: countResolution > 0 ? Math.round(totalResolution / countResolution) : undefined,
+    };
+  }, [evaluationsToUse]);
+
+  const kpis = latestEval?.kpis || {
+    etiquette: undefined,
+    solving: undefined,
+    product: undefined,
+    resolution: undefined,
+  };
 
   const totalCalls = filteredHistory.reduce(
     (sum, h) => sum + (h.answeredCalls || 0),
@@ -167,10 +185,9 @@ export const AgentDashboard: React.FC<Props> = ({
   // Calculate average KPI score
   const evaluations = agent.evaluations || [];
   const totalKpiScore = evaluations.reduce((sum, e) => 
-    sum + (e.kpis?.product || 0) + (e.kpis?.etiquette || 0) + (e.kpis?.solving || 0) + 
-    (e.kpis?.upsell || 0) + (e.kpis?.promo || 0) + (e.kpis?.capture || 0), 0);
+    sum + (e.kpis?.product || 0) + (e.kpis?.etiquette || 0) + (e.kpis?.solving || 0), 0);
   const averageKpiScore = evaluations.length > 0 
-    ? Math.round(totalKpiScore / (evaluations.length * 6)) : 0;
+    ? Math.round(totalKpiScore / (evaluations.length * 3)) : 0;
 
   // Calculate average resolution time in minutes
   const avgResolutionTimeMinutes = filteredHistory.length > 0
@@ -561,13 +578,7 @@ export const AgentDashboard: React.FC<Props> = ({
                 icon={<Activity />}
                 color="from-cyan-500 to-teal-500"
               />
-              <PremiumStatCard
-                title="Avg KPI Score"
-                value={`${averageKpiScore}%`}
-                sub="overall performance"
-                icon={<Award />}
-                color="from-purple-500 to-pink-500"
-              />
+
               <PremiumStatCard
                 title="Cheese Upsell"
                 value={`${cheeseUpsellPercentage}%`}
@@ -744,82 +755,31 @@ export const AgentDashboard: React.FC<Props> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <ThickKPI
                   label="Product Knowledge"
-                  value={kpis.product}
+                  value={avgKpis.product}
                   color="bg-blue-500"
                 />
                 <ThickKPI
                   label="Phone Etiquette"
-                  value={kpis.etiquette}
+                  value={avgKpis.etiquette}
                   color="bg-indigo-500"
                 />
                 <ThickKPI
                   label="Problem Solving"
-                  value={kpis.solving}
+                  value={avgKpis.solving}
                   color="bg-purple-500"
                 />
                 <ThickKPI
-                  label="Upselling"
-                  value={kpis.upsell}
+                  label="Resolution"
+                  value={avgKpis.resolution}
                   color="bg-emerald-500"
                 />
                 <ThickKPI
-                  label="Promotion"
-                  value={kpis.promo}
-                  color="bg-amber-500"
-                />
-                <ThickKPI
-                  label="Information Capture"
-                  value={kpis.capture}
-                  color="bg-rose-500"
-                />
-              </div>
-            </div>
-
-            {/* KPI Breakdown Section */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-indigo-500/30">
-              <div className="flex items-center justify-between mb-6">
-                <h4 className="text-white font-bold flex items-center gap-2">
-                  <BarChart4 size={18} className="text-indigo-400" />
-                  Your KPI Performance
-                </h4>
-                <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded-full">
-                  Based on {(agent.evaluations || []).length} evaluations
-                </span>
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <MiniKPICard
-                  label="Product"
-                  value={kpis.product}
-                  color="from-blue-500 to-blue-600"
-                />
-                <MiniKPICard
-                  label="Etiquette"
-                  value={kpis.etiquette}
-                  color="from-indigo-500 to-indigo-600"
-                />
-                <MiniKPICard
-                  label="Problem"
-                  value={kpis.solving}
-                  color="from-purple-500 to-purple-600"
-                />
-                <MiniKPICard
-                  label="Upsell"
-                  value={kpis.upsell}
-                  color="from-emerald-500 to-emerald-600"
-                />
-                <MiniKPICard
-                  label="Promo"
-                  value={kpis.promo}
-                  color="from-amber-500 to-amber-600"
-                />
-                <MiniKPICard
-                  label="Capture"
-                  value={kpis.capture}
-                  color="from-rose-500 to-rose-600"
+                  label="FCR"
+                  value={avgFCR}
+                  color="bg-cyan-500"
                 />
               </div>
             </div>
@@ -1228,9 +1188,7 @@ export const AgentDashboard: React.FC<Props> = ({
                   <KPIMini label="Product" value={evalItem.kpis.product} />
                   <KPIMini label="Etiquette" value={evalItem.kpis.etiquette} />
                   <KPIMini label="Solving" value={evalItem.kpis.solving} />
-                  <KPIMini label="Upsell" value={evalItem.kpis.upsell} />
-                  <KPIMini label="Promotion" value={evalItem.kpis.promo} />
-                  <KPIMini label="Capture" value={evalItem.kpis.capture} />
+                  <KPIMini label="Resolution" value={evalItem.kpis.resolution} />
                   {(evalItem.fcr !== undefined && evalItem.fcr > 0) ? (
                     <KPIMini label="FCR" value={evalItem.fcr} />
                   ) : null}

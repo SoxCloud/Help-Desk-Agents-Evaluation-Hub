@@ -64,9 +64,8 @@ Agent: ${agent.name}
 - Product Knowledge: ${latestEval.kpis?.product || 0}/100
 - Phone Etiquette: ${latestEval.kpis?.etiquette || 0}/100
 - Problem Solving: ${latestEval.kpis?.solving || 0}/100
-- Upselling: ${latestEval.kpis?.upsell || 0}/100
-- Promotion: ${latestEval.kpis?.promo || 0}/100
-- Information Capture: ${latestEval.kpis?.capture || 0}/100
+- Resolution: ${latestEval.kpis?.resolution || 0}/100
+- FCR: ${latestEval.fcr || 0}%
 
 💬 Evaluator Feedback: "${latestEval.comments || latestEval.positivePoints || 'No comments'}"
 
@@ -166,9 +165,7 @@ export const generateTeamInsights = async (agents: Agent[]) => {
       avgEtiquette: 0,
       avgProduct: 0,
       avgSolving: 0,
-      avgUpsell: 0,
-      avgPromo: 0,
-      avgCapture: 0,
+      avgResolution: 0,
       topPerformer: { name: '', score: 0 },
       needsHelp: { name: '', score: 100 },
     };
@@ -197,9 +194,7 @@ export const generateTeamInsights = async (agents: Agent[]) => {
         teamStats.avgEtiquette += latestEval.kpis?.etiquette || 0;
         teamStats.avgProduct += latestEval.kpis?.product || 0;
         teamStats.avgSolving += latestEval.kpis?.solving || 0;
-        teamStats.avgUpsell += latestEval.kpis?.upsell || 0;
-        teamStats.avgPromo += latestEval.kpis?.promo || 0;
-        teamStats.avgCapture += latestEval.kpis?.capture || 0;
+        teamStats.avgResolution += latestEval.kpis?.resolution || 0;
         evalCount++;
 
         if (score > teamStats.topPerformer.score) {
@@ -217,9 +212,7 @@ export const generateTeamInsights = async (agents: Agent[]) => {
       teamStats.avgEtiquette = Math.round(teamStats.avgEtiquette / evalCount);
       teamStats.avgProduct = Math.round(teamStats.avgProduct / evalCount);
       teamStats.avgSolving = Math.round(teamStats.avgSolving / evalCount);
-      teamStats.avgUpsell = Math.round(teamStats.avgUpsell / evalCount);
-      teamStats.avgPromo = Math.round(teamStats.avgPromo / evalCount);
-      teamStats.avgCapture = Math.round(teamStats.avgCapture / evalCount);
+      teamStats.avgResolution = Math.round(teamStats.avgResolution / evalCount);
     }
     teamStats.totalFCR = agents.length > 0 ? Math.round(teamStats.totalFCR / agents.length) : 0;
 
@@ -239,9 +232,8 @@ You are an expert Call Center Team Manager. Analyze this team's performance data
 - Phone Etiquette: ${teamStats.avgEtiquette}%
 - Product Knowledge: ${teamStats.avgProduct}%
 - Problem Solving: ${teamStats.avgSolving}%
-- Upselling: ${teamStats.avgUpsell}%
-- Promotion: ${teamStats.avgPromo}%
-- Information Capture: ${teamStats.avgCapture}%
+- Resolution: ${teamStats.avgResolution}%
+- FCR: ${teamStats.totalFCR}%
 
 🏆 TOP PERFORMER: ${teamStats.topPerformer.name} (${teamStats.topPerformer.score}%)
 ⚠️ NEEDS ATTENTION: ${teamStats.needsHelp.name} (${teamStats.needsHelp.score}%)
