@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Agent } from "../types";
-import { generateCoachingFeedback } from "../services/grokService";
+import { generateTeamInsights } from "../services/grokService";
 import {
   PhoneCall,
   Clock,
@@ -282,21 +282,8 @@ export const AdminDashboard: React.FC<Props> = ({
     setAiText("");
     
     try {
-      const agentWithLowestScore = agentsWithFilteredHistory
-        .filter(a => a.evaluations.length > 0)
-        .sort((a, b) => {
-          const aScore = a.evaluations[a.evaluations.length - 1]?.score || 0;
-          const bScore = b.evaluations[b.evaluations.length - 1]?.score || 0;
-          return aScore - bScore;
-        })[0];
-      
-      if (agentWithLowestScore) {
-        const latestEval = agentWithLowestScore.evaluations[agentWithLowestScore.evaluations.length - 1];
-        const feedback = await generateCoachingFeedback(agentWithLowestScore, latestEval, agentWithLowestScore.history);
-        setAiText(feedback);
-      } else {
-        setAiText("No agent evaluations found. Add evaluations to generate insights.");
-      }
+      const feedback = await generateTeamInsights(agentsWithFilteredHistory);
+      setAiText(feedback);
     } catch (err) {
       setAiError("Failed to generate insights. Please try again.");
     } finally {
@@ -705,7 +692,6 @@ export const AdminDashboard: React.FC<Props> = ({
                   <th className="px-3 py-3 text-center">ANS</th>
                   <th className="px-3 py-3 text-center">ABN</th>
                   <th className="px-3 py-3 text-center">ABN%</th>
-                  <th className="px-3 py-3 text-center">KPI</th>
                   <th className="px-3 py-3 text-center">CHEESE</th>
                   <th className="px-3 py-3 text-center">CSAT</th>
                   <th className="px-3 py-3 text-center">CRED</th>
@@ -770,19 +756,7 @@ export const AdminDashboard: React.FC<Props> = ({
                     agent.evaluations.length > 0
                       ? agent.evaluations[agent.evaluations.length - 1]?.score
                       : 0;
-                  
-                  // Calculate average KPI score for this agent
-                  const agentKpiAvg = agent.evaluations.length > 0
-                    ? Math.round(
-                        agent.evaluations.reduce((sum, e) => {
-                          const kpiSum = (e.kpis.product || 0) + (e.kpis.etiquette || 0) + 
-                                        (e.kpis.solving || 0) + (e.kpis.upsell || 0) + 
-                                        (e.kpis.promo || 0) + (e.kpis.capture || 0);
-                          return sum + (kpiSum / 6);
-                        }, 0) / agent.evaluations.length
-                      )
-                    : 0;
-                  
+                   
                   // Calculate average interactions per ticket for this agent
                   const agentTotalInteractions = agent.history.reduce(
                     (s, h) => s + (h.interactions || 0),
@@ -833,14 +807,6 @@ export const AdminDashboard: React.FC<Props> = ({
                         {abandonedRate}%
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-center">
-                      <span className={`font-black ${
-                        agentKpiAvg >= 80 ? 'text-emerald-400' : 
-                        agentKpiAvg >= 60 ? 'text-amber-400' : 'text-rose-400'
-                      }`}>
-                        {agentKpiAvg}%
-                      </span>
-                    </td>
                     <td className="px-3 py-3 text-center font-black text-amber-400">
                       {agentCheeseUpsell}%
                     </td>
@@ -884,7 +850,7 @@ export const AdminDashboard: React.FC<Props> = ({
                 <div className="p-2 bg-indigo-600/30 rounded-xl">
                   <Brain className="text-indigo-300" size={20} />
                 </div>
-                <h3 className="text-white font-bold">AI Coach Insights</h3>
+                <h3 className="text-white font-bold">Team AI Insights</h3>
               </div>
               <button 
                 onClick={() => setShowAiPanel(false)}
