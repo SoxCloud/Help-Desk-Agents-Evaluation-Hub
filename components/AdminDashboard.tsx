@@ -763,10 +763,11 @@ export const AdminDashboard: React.FC<Props> = ({
                     0,
                   );
                    
-                  const latestScore =
-                    agent.evaluations.length > 0
-                      ? agent.evaluations[agent.evaluations.length - 1]?.score
-                      : 0;
+                  // Calculate average CSAT score across all evaluations
+                  const totalScore = agent.evaluations.reduce((sum, e) => sum + (e.score || 0), 0);
+                  const latestScore = agent.evaluations.length > 0
+                    ? Math.round(totalScore / agent.evaluations.length)
+                    : 0;
                    
                   // Calculate average interactions per ticket for this agent
                   const agentTotalInteractions = agent.history.reduce(
