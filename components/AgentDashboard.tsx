@@ -120,6 +120,8 @@ export const AgentDashboard: React.FC<Props> = ({
   const filteredEvaluations = (agent.evaluations || []).filter((e) =>
     isWithinRange(e.date),
   );
+  
+  console.log("Agent=" + agent.name + " View=" + viewMode + " Evals=" + agent.evaluations?.length + " Filtered=" + filteredEvaluations.length);
 
   const latestEval =
     filteredEvaluations.length > 0
@@ -205,14 +207,14 @@ export const AgentDashboard: React.FC<Props> = ({
     0,
   );
 
-  // Calculate FCR (First Call Resolution) for this agent
-  const totalFCR = filteredHistory.reduce(
-    (sum, h) => sum + (h.fcr || 0),
+  // Calculate FCR (First Call Resolution) for this agent - from evaluations
+  const totalFCR = filteredEvaluations.reduce(
+    (sum, e) => sum + (e.fcr || 0),
     0,
   );
-  const avgFCR = filteredHistory.length > 0
-    ? (totalFCR / filteredHistory.length).toFixed(1)
-    : "0";
+  const avgFCR = filteredEvaluations.length > 0
+    ? Math.round(totalFCR / filteredEvaluations.length)
+    : 0;
 
   // Update goals with current values
   useEffect(() => {
@@ -586,6 +588,13 @@ export const AgentDashboard: React.FC<Props> = ({
                 sub="total completed"
                 icon={<ShoppingCart />}
                 color="from-teal-500 to-cyan-500"
+              />
+              <PremiumStatCard
+                title="FCR"
+                value={avgFCR}
+                sub="first call resolution"
+                icon={<Zap />}
+                color="from-cyan-500 to-blue-500"
               />
             </div>
 
@@ -1117,6 +1126,7 @@ export const AgentDashboard: React.FC<Props> = ({
                     <th className="px-3 py-3 text-center">CALLS</th>
                     <th className="px-3 py-3 text-center">ABN%</th>
                     <th className="px-3 py-3 text-center">CSAT</th>
+                    <th className="px-3 py-3 text-center">FCR</th>
                     <th className="px-3 py-3 text-center">CHEESE</th>
                   </tr>
                 </thead>
@@ -1138,6 +1148,9 @@ export const AgentDashboard: React.FC<Props> = ({
                       const solved = a.history.reduce((s, h) => s + (h.solvedTickets || 0), 0);
                       const debSales = a.history.reduce((s, h) => s + (h.debonairsSales || 0), 0);
                       const cheeseSales = a.history.reduce((s, h) => s + (h.cheeseSales || 0), 0);
+                      const agentFCR = a.evaluations.length > 0
+                        ? Math.round(a.evaluations.reduce((s, e) => s + (e.fcr || 0), 0) / a.evaluations.length)
+                        : 0;
                       const cheeseUpsell = debSales > cheeseSales ? ((cheeseSales / (debSales - cheeseSales)) * 100).toFixed(1) : "0";
                       const isMe = a.email.toLowerCase() === agent.email.toLowerCase();
                       
@@ -1167,6 +1180,9 @@ export const AgentDashboard: React.FC<Props> = ({
                           </td>
                           <td className="px-3 py-3 text-center font-black text-indigo-400">
                             {latestScore}%
+                          </td>
+                          <td className="px-3 py-3 text-center font-black text-cyan-400">
+                            {agentFCR}%
                           </td>
                           <td className="px-3 py-3 text-center font-black text-amber-400">
                             {cheeseUpsell}%
@@ -1215,6 +1231,9 @@ export const AgentDashboard: React.FC<Props> = ({
                   <KPIMini label="Upsell" value={evalItem.kpis.upsell || 0} />
                   <KPIMini label="Promotion" value={evalItem.kpis.promo || 0} />
                   <KPIMini label="Capture" value={evalItem.kpis.capture || 0} />
+                  {(evalItem.fcr !== undefined && evalItem.fcr > 0) ? (
+                    <KPIMini label="FCR" value={evalItem.fcr} />
+                  ) : null}
                 </div>
 
                 {evalItem.comments && (

@@ -62,12 +62,15 @@ export const AdminDashboard: React.FC<Props> = ({
   };
 
   // Filtered data by date range
+  const adminEmails = ['sogcinwacallcenter@gmail.com', 'tshabalaladialndine@gmail.com'];
   const agentsWithFilteredHistory = useMemo(() => {
-    const filtered = agents.map((agent) => ({
-      ...agent,
-      history: agent.history.filter((h) => isWithinRange(h.date)),
-      evaluations: agent.evaluations.filter((e) => isWithinRange(e.date)),
-    }));
+    const filtered = agents
+      .filter((agent) => !adminEmails.includes(agent.email.toLowerCase()))
+      .map((agent) => ({
+        ...agent,
+        history: agent.history.filter((h) => isWithinRange(h.date)),
+        evaluations: agent.evaluations.filter((e) => isWithinRange(e.date)),
+      }));
 
     const q = searchQuery.trim().toLowerCase();
     const result = !q ? filtered : filtered.filter(
@@ -248,6 +251,7 @@ export const AdminDashboard: React.FC<Props> = ({
     let totalUpsell = 0;
     let totalPromo = 0;
     let totalCapture = 0;
+    let totalFCR = 0;
     let evalCount = 0;
 
     agentsWithFilteredHistory.forEach(agent => {
@@ -258,6 +262,7 @@ export const AdminDashboard: React.FC<Props> = ({
         totalUpsell += evalItem.kpis.upsell || 0;
         totalPromo += evalItem.kpis.promo || 0;
         totalCapture += evalItem.kpis.capture || 0;
+        totalFCR += evalItem.fcr || 0;
         evalCount++;
       });
     });
@@ -269,6 +274,7 @@ export const AdminDashboard: React.FC<Props> = ({
       upsell: evalCount > 0 ? Math.round(totalUpsell / evalCount) : 0,
       promo: evalCount > 0 ? Math.round(totalPromo / evalCount) : 0,
       capture: evalCount > 0 ? Math.round(totalCapture / evalCount) : 0,
+      fcr: evalCount > 0 ? Math.round(totalFCR / evalCount) : 0,
       totalEvals: evalCount,
     };
   }, [agentsWithFilteredHistory]);
@@ -374,12 +380,12 @@ export const AdminDashboard: React.FC<Props> = ({
             showPercentage={false}
           />
           
-          {/* Percentages */}
+          {/* Percentages - FCR from evaluations */}
           <MetricCard
             title="FCR"
-            value={avgFCR}
+            value={kpiAverages.fcr}
             change="First Call Resolution"
-            icon={<CheckCircle className="text-green-400" />}
+            icon={<CheckCircle className="text-cyan-400" />}
             showPercentage={true}
           />
           
@@ -660,6 +666,12 @@ export const AdminDashboard: React.FC<Props> = ({
               icon={<CheckCircle className="text-rose-400" size={18} />}
               color="from-rose-500 to-rose-600"
             />
+            <KPICard
+              label="FCR"
+              value={kpiAverages.fcr}
+              icon={<Zap className="text-cyan-400" size={18} />}
+              color="from-cyan-500 to-cyan-600"
+            />
           </div>
         </div>
 
@@ -732,13 +744,13 @@ export const AdminDashboard: React.FC<Props> = ({
                     : "0";
                   
                   // Calculate average FCR for this agent
-                  const agentFCR = agent.history.reduce(
-                    (s, h) => s + (h.fcr || 0),
+                  const agentFCR = agent.evaluations.reduce(
+                    (s, e) => s + (e.fcr || 0),
                     0,
                   );
-                  const agentFcrAvg = agent.history.length > 0
-                    ? (agentFCR / agent.history.length).toFixed(1)
-                    : "0";
+                  const agentFcrAvg = agent.evaluations.length > 0
+                    ? Math.round(agentFCR / agent.evaluations.length)
+                    : 0;
                   
                   // Calculate credits for this agent (as number, not percentage)
                   const agentCredits = agent.history.reduce(
@@ -791,7 +803,7 @@ export const AdminDashboard: React.FC<Props> = ({
                       {agentAvgInteractions}
                     </td>
                     <td className="px-3 py-3 text-center font-black text-green-400">
-                      {agentFcrAvg}%
+                      {agentFcrAvg}
                     </td>
                     <td className="px-3 py-3 text-center font-black text-blue-400">
                       {totalAnswered}

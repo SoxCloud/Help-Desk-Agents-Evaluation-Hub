@@ -149,7 +149,7 @@ export const fetchAllDashboardData = async () => {
   const idxUpselling = eIdx.findColumn(["upsellingScore"]);
   const idxPromotion = eIdx.findColumn(["promotionScore"]);
   const idxInfoCapturing = eIdx.findColumn(["infoCapturingScore"]);
-  const idxResolution = eIdx.findColumn(["Resolution"]);
+  const idxResolution = eIdx.findColumn(["Resolution outcome", "Resolution"]);
   const idxComment = eIdx.findColumn(["evaluatorComment"]);
   
   // For overall rating - if not present, we'll calculate from the scores
@@ -212,7 +212,8 @@ export const fetchAllDashboardData = async () => {
     const phoneEtiquette = parseInt((row[idxPhoneEtiquette] ?? "0").trim(), 10) || 0;
     const problemSolving = parseInt((row[idxProblemSolving] ?? "0").trim(), 10) || 0;
     const productKnowledge = parseInt((row[idxProductKnowledge] ?? "0").trim(), 10) || 0;
-    const fcr = parseInt((row[idxFCR] ?? "0").trim(), 10) || 0;
+    const fcrRaw = (row[idxFCR] ?? "0").trim().replace('%', '');
+    const fcr = parseFloat(fcrRaw) || 0;
     const upselling = parseInt((row[idxUpselling] ?? "0").trim(), 10) || 0;
     const promotion = parseInt((row[idxPromotion] ?? "0").trim(), 10) || 0;
     const infoCapturing = parseInt((row[idxInfoCapturing] ?? "0").trim(), 10) || 0;
@@ -236,20 +237,7 @@ export const fetchAllDashboardData = async () => {
     // Get callId (phone number)
     const called = (row[idxCalled] ?? "").trim();
     
-    console.log("Parsed evaluation data:", {
-      agent: agent.name,
-      phoneEtiquette,
-      problemSolving,
-      productKnowledge,
-      fcr,
-      upselling,
-      promotion,
-      infoCapturing,
-      resolution,
-      score,
-      comment,
-      called
-    });
+    console.log(`[EVAL] ${agent.name}: FCR=${fcr}, upselling=${upselling}`);
 
     // Create evaluation object
     const evaluation: any = {
@@ -348,6 +336,12 @@ export const fetchAllDashboardData = async () => {
     name: agentsMap[email].name,
     evaluationsCount: agentsMap[email].evaluations.length
   })));
+
+  // Debug: check first evaluation's fcr
+  const firstAgent = Object.values(agentsMap)[0];
+  if (firstAgent?.evaluations[0]) {
+    console.log("First evaluation in final data:", firstAgent.evaluations[0]);
+  }
 
   return { agents: Object.values(agentsMap) };
 };
