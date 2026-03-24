@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, BarChart3, Moon, Sun, LogOut, PlayCircle, Trophy } from 'lucide-react';
+import { LayoutDashboard, Users, Moon, Sun, LogOut, PlayCircle, Trophy } from 'lucide-react';
 import { User, UserRole } from '../types';
 
 export const Sidebar = ({ user, activeTab, setActiveTab, onLogout, isDarkMode, toggleTheme }: any) => {
@@ -7,7 +7,6 @@ export const Sidebar = ({ user, activeTab, setActiveTab, onLogout, isDarkMode, t
     ? [
         { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
         { id: 'agents', label: 'Agent Roster', icon: Users },
-        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
       ]
     : [
         { id: 'dashboard', label: 'My Dashboard', icon: LayoutDashboard },
