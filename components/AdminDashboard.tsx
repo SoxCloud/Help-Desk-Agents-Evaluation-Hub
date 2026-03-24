@@ -948,14 +948,16 @@ const KPICard = ({ label, value, icon, color }: any) => (
       <div className={`p-1.5 rounded-lg bg-gradient-to-br ${color} bg-opacity-20`}>
         {React.cloneElement(icon, { size: 16 })}
       </div>
-      <span className="text-base font-black text-white">{value}%</span>
+      <span className="text-base font-black text-white">{value !== undefined ? `${value}%` : '—'}</span>
     </div>
     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate" title={label}>{label}</p>
-    <div className="mt-2 h-1 bg-slate-700 rounded-full overflow-hidden">
-      <div 
-        className={`h-full rounded-full bg-gradient-to-r ${color}`}
-        style={{ width: `${value}%` }}
-      ></div>
-    </div>
+    {value !== undefined && (
+      <div className="mt-2 h-1 bg-slate-700 rounded-full overflow-hidden">
+        <div 
+          className={`h-full rounded-full bg-gradient-to-r ${color}`}
+          style={{ width: `${value}%` }}
+        ></div>
+      </div>
+    )}
   </div>
 );

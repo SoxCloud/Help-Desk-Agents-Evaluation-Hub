@@ -4,7 +4,6 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { AgentDashboard } from './components/AgentDashboard';
 import { AgentRoster } from './components/AgentRoster';
 import { Login } from './components/Login';
-import { AnalyticsView } from './components/AnalyticsView';
 import { User, UserRole, Agent, ValidUser } from './types';
 import { fetchAllDashboardData } from './services/sheetService';
 import { RefreshCw, Menu, X, AlertCircle } from 'lucide-react';
@@ -288,10 +287,6 @@ const App: React.FC = () => {
                     agents={agents} 
                     onViewAgent={(id) => { setSelectedAgentId(id); setAdminViewMode('stats'); }} 
                   />
-                )}
-
-                {activeTab === 'analytics' && (
-                  <AnalyticsView agents={agents} />
                 )}
               </>
             )

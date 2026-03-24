@@ -747,32 +747,32 @@ export const AgentDashboard: React.FC<Props> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8">
                 <ThickKPI
                   label="Product Knowledge"
-                  value={kpis.product || 0}
+                  value={kpis.product}
                   color="bg-blue-500"
                 />
                 <ThickKPI
                   label="Phone Etiquette"
-                  value={kpis.etiquette || 0}
+                  value={kpis.etiquette}
                   color="bg-indigo-500"
                 />
                 <ThickKPI
                   label="Problem Solving"
-                  value={kpis.solving || 0}
+                  value={kpis.solving}
                   color="bg-purple-500"
                 />
                 <ThickKPI
                   label="Upselling"
-                  value={kpis.upsell || 0}
+                  value={kpis.upsell}
                   color="bg-emerald-500"
                 />
                 <ThickKPI
                   label="Promotion"
-                  value={kpis.promo || 0}
+                  value={kpis.promo}
                   color="bg-amber-500"
                 />
                 <ThickKPI
                   label="Information Capture"
-                  value={kpis.capture || 0}
+                  value={kpis.capture}
                   color="bg-rose-500"
                 />
               </div>
@@ -793,32 +793,32 @@ export const AgentDashboard: React.FC<Props> = ({
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 <MiniKPICard
                   label="Product"
-                  value={kpis.product || 0}
+                  value={kpis.product}
                   color="from-blue-500 to-blue-600"
                 />
                 <MiniKPICard
                   label="Etiquette"
-                  value={kpis.etiquette || 0}
+                  value={kpis.etiquette}
                   color="from-indigo-500 to-indigo-600"
                 />
                 <MiniKPICard
                   label="Problem"
-                  value={kpis.solving || 0}
+                  value={kpis.solving}
                   color="from-purple-500 to-purple-600"
                 />
                 <MiniKPICard
                   label="Upsell"
-                  value={kpis.upsell || 0}
+                  value={kpis.upsell}
                   color="from-emerald-500 to-emerald-600"
                 />
                 <MiniKPICard
                   label="Promo"
-                  value={kpis.promo || 0}
+                  value={kpis.promo}
                   color="from-amber-500 to-amber-600"
                 />
                 <MiniKPICard
                   label="Capture"
-                  value={kpis.capture || 0}
+                  value={kpis.capture}
                   color="from-rose-500 to-rose-600"
                 />
               </div>
@@ -1225,12 +1225,12 @@ export const AgentDashboard: React.FC<Props> = ({
                 </div>
 
                 <div className="p-2 space-y-1">
-                  <KPIMini label="Product" value={evalItem.kpis.product || 0} />
-                  <KPIMini label="Etiquette" value={evalItem.kpis.etiquette || 0} />
-                  <KPIMini label="Solving" value={evalItem.kpis.solving || 0} />
-                  <KPIMini label="Upsell" value={evalItem.kpis.upsell || 0} />
-                  <KPIMini label="Promotion" value={evalItem.kpis.promo || 0} />
-                  <KPIMini label="Capture" value={evalItem.kpis.capture || 0} />
+                  <KPIMini label="Product" value={evalItem.kpis.product} />
+                  <KPIMini label="Etiquette" value={evalItem.kpis.etiquette} />
+                  <KPIMini label="Solving" value={evalItem.kpis.solving} />
+                  <KPIMini label="Upsell" value={evalItem.kpis.upsell} />
+                  <KPIMini label="Promotion" value={evalItem.kpis.promo} />
+                  <KPIMini label="Capture" value={evalItem.kpis.capture} />
                   {(evalItem.fcr !== undefined && evalItem.fcr > 0) ? (
                     <KPIMini label="FCR" value={evalItem.fcr} />
                   ) : null}
@@ -1277,7 +1277,7 @@ const ThickKPI = ({
   color,
 }: {
   label: string;
-  value: number;
+  value: number | undefined;
   color: string;
 }) => (
   <div className="space-y-3">
@@ -1286,44 +1286,50 @@ const ThickKPI = ({
         {label}
       </span>
       <span className="text-xs font-black text-white bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-800">
-        {value}%
+        {value !== undefined ? `${value}%` : '—'}
       </span>
     </div>
-    <div className="h-4 bg-slate-950 rounded-full border border-slate-800/80 overflow-hidden p-[3px] shadow-inner">
-      <div
-        className={`h-full rounded-full transition-all duration-1000 ${color} shadow-[0_0_15px_rgba(99,102,241,0.2)]`}
-        style={{ width: `${value}%` }}
-      ></div>
-    </div>
+    {value !== undefined && (
+      <div className="h-4 bg-slate-950 rounded-full border border-slate-800/80 overflow-hidden p-[3px] shadow-inner">
+        <div
+          className={`h-full rounded-full transition-all duration-1000 ${color} shadow-[0_0_15px_rgba(99,102,241,0.2)]`}
+          style={{ width: `${value}%` }}
+        ></div>
+      </div>
+    )}
   </div>
 );
 
-const MiniKPICard = ({ label, value, color }: { label: string; value: number; color: string }) => (
+const MiniKPICard = ({ label, value, color }: { label: string; value: number | undefined; color: string }) => (
   <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700 hover:border-indigo-500/50 transition-all group">
     <div className="flex items-center justify-between mb-2">
       <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
-      <span className="text-sm font-black text-white">{value}%</span>
+      <span className="text-sm font-black text-white">{value !== undefined ? `${value}%` : '—'}</span>
     </div>
-    <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-      <div 
-        className={`h-full rounded-full bg-gradient-to-r ${color}`}
-        style={{ width: `${value}%` }}
-      ></div>
-    </div>
+    {value !== undefined && (
+      <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+        <div 
+          className={`h-full rounded-full bg-gradient-to-r ${color}`}
+          style={{ width: `${value}%` }}
+        ></div>
+      </div>
+    )}
   </div>
 );
 
-const KPIMini = ({ label, value }: { label: string; value: number }) => (
+const KPIMini = ({ label, value }: { label: string; value: number | undefined }) => (
   <div className="space-y-1">
     <div className="flex justify-between items-center text-[10px]">
       <span className="text-slate-500 font-bold">{label}</span>
-      <span className="text-white font-black">{value}%</span>
+      <span className="text-white font-black">{value !== undefined ? `${value}%` : '—'}</span>
     </div>
-    <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-      <div 
-        className="h-full bg-indigo-500 rounded-full"
-        style={{ width: `${value}%` }}
-      />
-    </div>
+    {value !== undefined && (
+      <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-indigo-500 rounded-full"
+          style={{ width: `${value}%` }}
+        />
+      </div>
+    )}
   </div>
 );

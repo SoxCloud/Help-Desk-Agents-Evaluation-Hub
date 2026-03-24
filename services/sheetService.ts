@@ -208,21 +208,28 @@ export const fetchAllDashboardData = async () => {
       durationSeconds = parseInt(durationStr, 10) || 0;
     }
     
-    // Parse scores (from your example: Esther has all zeros)
-    const phoneEtiquette = parseInt((row[idxPhoneEtiquette] ?? "0").trim(), 10) || 0;
-    const problemSolving = parseInt((row[idxProblemSolving] ?? "0").trim(), 10) || 0;
-    const productKnowledge = parseInt((row[idxProductKnowledge] ?? "0").trim(), 10) || 0;
-    const fcrRaw = (row[idxFCR] ?? "0").trim().replace('%', '');
-    const fcr = parseFloat(fcrRaw) || 0;
-    const upselling = parseInt((row[idxUpselling] ?? "0").trim(), 10) || 0;
-    const promotion = parseInt((row[idxPromotion] ?? "0").trim(), 10) || 0;
-    const infoCapturing = parseInt((row[idxInfoCapturing] ?? "0").trim(), 10) || 0;
+    // Parse scores - blank cells are undefined (N/A, not 0)
+    const rawPhoneEtiquette = (row[idxPhoneEtiquette] ?? "").trim();
+    const rawProblemSolving = (row[idxProblemSolving] ?? "").trim();
+    const rawProductKnowledge = (row[idxProductKnowledge] ?? "").trim();
+    const rawUpselling = (row[idxUpselling] ?? "").trim();
+    const rawPromotion = (row[idxPromotion] ?? "").trim();
+    const rawInfoCapturing = (row[idxInfoCapturing] ?? "").trim();
+    
+    const phoneEtiquette = rawPhoneEtiquette ? parseInt(rawPhoneEtiquette, 10) || 0 : undefined;
+    const problemSolving = rawProblemSolving ? parseInt(rawProblemSolving, 10) || 0 : undefined;
+    const productKnowledge = rawProductKnowledge ? parseInt(rawProductKnowledge, 10) || 0 : undefined;
+    const upselling = rawUpselling ? parseInt(rawUpselling, 10) || 0 : undefined;
+    const promotion = rawPromotion ? parseInt(rawPromotion, 10) || 0 : undefined;
+    const infoCapturing = rawInfoCapturing ? parseInt(rawInfoCapturing, 10) || 0 : undefined;
+    
+    const fcrRaw = (row[idxFCR] ?? "").trim().replace('%', '');
+    const fcr = fcrRaw ? parseFloat(fcrRaw) || 0 : 0;
     const resolution = parseInt((row[idxResolution] ?? "0").trim(), 10) || 0;
     
-    // Calculate overall score as average of all 6 KPIs
-    const score = Math.round(
-      (phoneEtiquette + problemSolving + productKnowledge + upselling + promotion + infoCapturing) / 6
-    );
+    // Calculate overall score as average of ONLY the KPIs that were scored (exclude N/A)
+    const scoredKpis = [phoneEtiquette, problemSolving, productKnowledge, upselling, promotion, infoCapturing].filter(v => v !== undefined);
+    const score = scoredKpis.length > 0 ? Math.round(scoredKpis.reduce((a, b) => a + b, 0) / scoredKpis.length) : 0;
     
     // Try to get overall rating if it exists
     let overallRating: number | undefined;
