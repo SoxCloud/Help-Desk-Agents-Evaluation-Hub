@@ -641,7 +641,11 @@ export const AnalyticsView: React.FC<Props> = ({ agents }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
-              {agents.map((agent) => {
+              {[...agents].sort((a, b) => {
+                const callsA = a.history.reduce((s, h) => s + (h.answeredCalls || 0), 0);
+                const callsB = b.history.reduce((s, h) => s + (h.answeredCalls || 0), 0);
+                return callsB - callsA;
+              }).map((agent) => {
                 const calls = agent.history.reduce((s, h) => s + (h.answeredCalls || 0), 0);
                 const tickets = agent.history.reduce((s, h) => s + (h.totalTickets || 0), 0);
                 const solved = agent.history.reduce((s, h) => s + (h.solvedTickets || 0), 0);
