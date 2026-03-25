@@ -1161,7 +1161,12 @@ export const AgentDashboard: React.FC<Props> = ({
       ) : (
         /* EVALUATIONS VIEW */
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in slide-in-from-bottom-6 duration-500">
-          {(filteredEvaluations.length ? filteredEvaluations : (agent.evaluations || [])).map((evalItem, idx) => {
+          {filteredEvaluations.length === 0 ? (
+            <div className="col-span-full text-center text-slate-500 py-8">
+              No evaluations found in selected date range
+            </div>
+          ) : (
+          filteredEvaluations.map((evalItem, idx) => {
             const phoneNumber = evalItem.id ? formatPhoneNumber(evalItem.id) : `#${1000 + idx}`;
             
             return (
@@ -1214,7 +1219,8 @@ export const AgentDashboard: React.FC<Props> = ({
                 </div>
               </div>
             );
-          })}
+          })
+          )}
         </div>
       )}
     </div>
