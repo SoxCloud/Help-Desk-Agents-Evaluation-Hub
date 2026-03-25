@@ -373,32 +373,33 @@ export const AgentDashboard: React.FC<Props> = ({
     },
   ];
 
-  // Export function
+  // Export function - CSV format
   const exportData = () => {
-    const data = {
-      agent: agent.name,
-      period: `${dateRange.start} to ${dateRange.end}`,
-      stats: {
-        totalCalls,
-        totalTickets,
-        currentScore,
-        weightedResolutionRate,
-        interactions,
-        kpis,
-        debonairsSales: totalDebSales,
-        cheeseSales: totalCheeseSales,
-        cheeseUpsellPercentage: cheeseUpsellPercentage,
-        creditsDiscounts: totalCreditsDiscounts,
-        fcr: avgFCR
-      },
-      evaluations: agent.evaluations || []
-    };
+    const rows: string[][] = [
+      ['Date', 'Phone', 'CSAT', 'Product', 'Etiquette', 'Solving', 'Resolution', 'FCR', 'Evaluator', 'Comments']
+    ];
     
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    filteredEvaluations.forEach(e => {
+      rows.push([
+        e.date || '',
+        e.called || '',
+        e.score?.toString() || '',
+        e.kpis?.product?.toString() || '',
+        e.kpis?.etiquette?.toString() || '',
+        e.kpis?.solving?.toString() || '',
+        e.kpis?.resolution?.toString() || '',
+        e.fcr?.toString() || '',
+        e.evaluator || '',
+        e.comments || ''
+      ]);
+    });
+    
+    const csv = rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${agent.name}-performance-${dateRange.start}.json`;
+    a.download = `${agent.name}-evaluations-${dateRange.start}.csv`;
     a.click();
   };
 
