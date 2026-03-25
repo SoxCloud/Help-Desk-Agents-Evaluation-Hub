@@ -160,6 +160,8 @@ const App: React.FC = () => {
         role: validUser.role,
         avatarUrl: validUser.avatarUrl
       });
+      setActiveTab('dashboard');
+      setSelectedAgentId(null);
       console.log("✅ User logged in:", validUser.email);
       return true;
     }
