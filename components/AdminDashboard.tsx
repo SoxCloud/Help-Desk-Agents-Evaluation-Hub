@@ -435,7 +435,7 @@ export const AdminDashboard: React.FC<Props> = ({
           {/* Numbers */}
           <MetricCard
             title="Evaluations"
-            value={totalEvaluatedCalls}
+            value={allEvaluations.length}
             change="Total"
             icon={<CheckCircle className="text-emerald-400" />}
             showPercentage={false}

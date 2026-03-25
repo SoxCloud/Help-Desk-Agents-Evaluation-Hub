@@ -136,7 +136,7 @@ export const fetchAllDashboardData = async () => {
   // Map your exact column names from the image
   const idxEvalAgent = eIdx.findColumn(["agent"]);
   const idxEvalEmail = eIdx.findColumn(["email"]);
-  const idxCalled = eIdx.findColumn(["callId"]);  // Changed from callid to callId
+  const idxCalled = eIdx.findColumn(["callId", "CallId", "call id", "Call ID", "phone", "Phone", "number", "Number"]);
   const idxEvalDate = eIdx.findColumn(["Date"]);   // Capital D in Date
   const idxCallReceivedDate = eIdx.findColumn(["callReceivedDate", "CallReceivedDate", "callDate", "CallDate", "callReceived"]);
   const idxEvaluator = eIdx.findColumn(["evaluator"]);
@@ -170,9 +170,9 @@ export const fetchAllDashboardData = async () => {
     overallRating: idxOverallRating
   });
 
+  let rowNum = 0;
   evalV1.slice(1).forEach((row) => {
-    // Log the row to see what data is coming in
-    console.log("Processing evaluation row:", row);
+    rowNum++;
     
     const agentName = (row[idxEvalAgent] ?? "").trim();
     const emailRaw = (row[idxEvalEmail] ?? "").trim();
@@ -237,7 +237,7 @@ export const fetchAllDashboardData = async () => {
 
     // Create evaluation object
     const evaluation: any = {
-      id: called || `eval-${Date.now()}-${Math.random()}`,
+      id: called || `row-${rowNum}`,
       date: normalizeDate((row[idxEvalDate] ?? "").trim()),
       callReceivedDate: normalizeDate((row[idxCallReceivedDate] ?? "").trim()),
       evaluator: (row[idxEvaluator] ?? "").trim() || undefined,

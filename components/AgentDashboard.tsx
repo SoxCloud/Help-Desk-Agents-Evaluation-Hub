@@ -1169,45 +1169,47 @@ export const AgentDashboard: React.FC<Props> = ({
                 key={idx}
                 className="bg-[#1e293b] border border-slate-800 rounded-lg overflow-hidden shadow-lg group hover:border-indigo-500/40 transition-all"
               >
-                <div className="p-3 border-b border-slate-800 bg-slate-900/40 flex justify-between items-center">
-                  <span className="text-white font-bold text-xs">{phoneNumber}</span>
-                  <span className={`text-lg font-black ${evalItem.score >= 90 ? "text-emerald-400" : "text-orange-400"}`}>
-                    {evalItem.score}%
-                  </span>
-                </div>
-
-                <div className="flex">
-                  {/* Left side - KPIs */}
-                  <div className="w-1/2 p-3 border-r border-slate-800/50 space-y-1">
-                    <KPIMini label="Product" value={evalItem.kpis.product} />
-                    <KPIMini label="Etiquette" value={evalItem.kpis.etiquette} />
-                    <KPIMini label="Solving" value={evalItem.kpis.solving} />
-                    <KPIMini label="Resolution" value={evalItem.kpis.resolution} />
-                    {(evalItem.fcr !== undefined && evalItem.fcr > 0) ? (
-                      <KPIMini label="FCR" value={evalItem.fcr} />
-                    ) : null}
+                <div className="p-3 border-b border-slate-800 bg-slate-900/40">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-white font-bold text-xs">{phoneNumber}</span>
+                    <span className={`text-xl font-black ${evalItem.score >= 90 ? "text-emerald-400" : "text-orange-400"}`}>
+                      {evalItem.score}%
+                    </span>
                   </div>
-
-                  {/* Right side - Details & Comments */}
-                  <div className="w-1/2 p-3 space-y-2">
-                    <div className="text-[9px] text-slate-500 space-y-1">
-                      {evalItem.callReceivedDate && (
-                        <div>Called: {evalItem.callReceivedDate}</div>
-                      )}
-                      <div className="text-indigo-400">{evalItem.date || dateRange.start}</div>
-                      {evalItem.evaluator && (
-                        <div>By: {evalItem.evaluator}</div>
-                      )}
-                      <div>{evalItem.duration || (evalItem.durationSeconds ? `${Math.floor(evalItem.durationSeconds / 60)}:${(evalItem.durationSeconds % 60).toString().padStart(2, "0")}` : "")}</div>
+                  
+                  <div className="flex gap-4">
+                    {/* KPIs */}
+                    <div className="space-y-1">
+                      <KPIMini label="Product" value={evalItem.kpis.product} />
+                      <KPIMini label="Etiquette" value={evalItem.kpis.etiquette} />
+                      <KPIMini label="Solving" value={evalItem.kpis.solving} />
+                      <KPIMini label="Resolution" value={evalItem.kpis.resolution} />
+                      {(evalItem.fcr !== undefined && evalItem.fcr > 0) ? (
+                        <KPIMini label="FCR" value={evalItem.fcr} />
+                      ) : null}
                     </div>
-                    
-                    {evalItem.comments && (
-                      <div className="mt-2 pt-2 border-t border-slate-800/50">
-                        <p className="text-[9px] text-slate-400 italic line-clamp-4">
-                          "{evalItem.comments}"
-                        </p>
+
+                    {/* Details & Comments */}
+                    <div className="flex-1 space-y-2">
+                      <div className="text-[10px] text-slate-500 space-y-1">
+                        {evalItem.callReceivedDate && (
+                          <div>Called: {evalItem.callReceivedDate}</div>
+                        )}
+                        <div className="text-indigo-400">{evalItem.date || dateRange.start}</div>
+                        {evalItem.evaluator && (
+                          <div>By: {evalItem.evaluator}</div>
+                        )}
+                        <div>{evalItem.duration || (evalItem.durationSeconds ? `${Math.floor(evalItem.durationSeconds / 60)}:${(evalItem.durationSeconds % 60).toString().padStart(2, "0")}` : "")}</div>
                       </div>
-                    )}
+                      
+                      {evalItem.comments && (
+                        <div className="pt-2 border-t border-slate-800/50">
+                          <p className="text-[11px] text-slate-300 italic leading-relaxed">
+                            "{evalItem.comments}"
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1285,18 +1287,8 @@ const MiniKPICard = ({ label, value, color }: { label: string; value: number | u
 );
 
 const KPIMini = ({ label, value }: { label: string; value: number | undefined }) => (
-  <div className="space-y-1">
-    <div className="flex justify-between items-center text-[10px]">
-      <span className="text-slate-500 font-bold">{label}</span>
-      <span className="text-white font-black">{value !== undefined ? `${value}%` : '—'}</span>
-    </div>
-    {value !== undefined && (
-      <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-        <div 
-          className="h-full bg-indigo-500 rounded-full"
-          style={{ width: `${value}%` }}
-        />
-      </div>
-    )}
+  <div className="flex justify-between text-xs min-w-[120px]">
+    <span className="text-slate-400 font-medium">{label}:</span>
+    <span className="text-white font-bold ml-4">{value !== undefined ? `${value}%` : '—'}</span>
   </div>
 );
