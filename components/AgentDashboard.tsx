@@ -1098,8 +1098,10 @@ export const AgentDashboard: React.FC<Props> = ({
                       return ticketsB - ticketsA;
                     })
                     .map((a) => {
-                      const latestScore = a.evaluations.length > 0 
-                        ? a.evaluations[a.evaluations.length - 1]?.score || 0 
+                      // Calculate average CSAT score across all evaluations
+                      const totalScore = a.evaluations.reduce((s, e) => s + (e.score || 0), 0);
+                      const latestScore = a.evaluations.length > 0
+                        ? Math.round(totalScore / a.evaluations.length)
                         : 0;
                       const totalCalls = a.history.reduce((s, h) => s + (h.answeredCalls || 0), 0);
                       const totalAbandoned = a.history.reduce((s, h) => s + (h.abandonedCalls || 0), 0);
@@ -1108,9 +1110,10 @@ export const AgentDashboard: React.FC<Props> = ({
                       const solved = a.history.reduce((s, h) => s + (h.solvedTickets || 0), 0);
                       const debSales = a.history.reduce((s, h) => s + (h.debonairsSales || 0), 0);
                       const cheeseSales = a.history.reduce((s, h) => s + (h.cheeseSales || 0), 0);
-                      const agentFCR = a.evaluations.length > 0
-                        ? Math.round(a.evaluations.reduce((s, e) => s + (e.fcr || 0), 0) / a.evaluations.length)
-                        : 0;
+                      // Calculate average FCR from evaluations (only where FCR is scored)
+                      const fcrTotal = a.evaluations.reduce((s, e) => s + (e.fcr && e.fcr > 0 ? e.fcr : 0), 0);
+                      const fcrCount = a.evaluations.filter(e => e.fcr && e.fcr > 0).length;
+                      const agentFCR = fcrCount > 0 ? Math.round(fcrTotal / fcrCount) : 0;
                       const cheeseUpsell = debSales > cheeseSales ? ((cheeseSales / (debSales - cheeseSales)) * 100).toFixed(1) : "0";
                       const isMe = a.email.toLowerCase() === agent.email.toLowerCase();
                       
@@ -1166,41 +1169,47 @@ export const AgentDashboard: React.FC<Props> = ({
                 key={idx}
                 className="bg-[#1e293b] border border-slate-800 rounded-lg overflow-hidden shadow-lg group hover:border-indigo-500/40 transition-all"
               >
-                <div className="p-3 border-b border-slate-800 bg-slate-900/40">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-white font-bold text-xs truncate">{phoneNumber}</span>
-                    <span className={`text-lg font-black ${evalItem.score >= 90 ? "text-emerald-400" : "text-orange-400"}`}>
-                      {evalItem.score}%
-                    </span>
+                <div className="p-3 border-b border-slate-800 bg-slate-900/40 flex justify-between items-center">
+                  <span className="text-white font-bold text-xs">{phoneNumber}</span>
+                  <span className={`text-lg font-black ${evalItem.score >= 90 ? "text-emerald-400" : "text-orange-400"}`}>
+                    {evalItem.score}%
+                  </span>
+                </div>
+
+                <div className="flex">
+                  {/* Left side - KPIs */}
+                  <div className="w-1/2 p-3 border-r border-slate-800/50 space-y-1">
+                    <KPIMini label="Product" value={evalItem.kpis.product} />
+                    <KPIMini label="Etiquette" value={evalItem.kpis.etiquette} />
+                    <KPIMini label="Solving" value={evalItem.kpis.solving} />
+                    <KPIMini label="Resolution" value={evalItem.kpis.resolution} />
+                    {(evalItem.fcr !== undefined && evalItem.fcr > 0) ? (
+                      <KPIMini label="FCR" value={evalItem.fcr} />
+                    ) : null}
                   </div>
-                  <div className="flex justify-between text-[9px] text-slate-500">
-                    <div className="flex flex-col">
+
+                  {/* Right side - Details & Comments */}
+                  <div className="w-1/2 p-3 space-y-2">
+                    <div className="text-[9px] text-slate-500 space-y-1">
                       {evalItem.callReceivedDate && (
-                        <span>Called: {evalItem.callReceivedDate}</span>
+                        <div>Called: {evalItem.callReceivedDate}</div>
                       )}
-                      <span className="text-indigo-400">{evalItem.date || dateRange.start}</span>
+                      <div className="text-indigo-400">{evalItem.date || dateRange.start}</div>
+                      {evalItem.evaluator && (
+                        <div>By: {evalItem.evaluator}</div>
+                      )}
+                      <div>{evalItem.duration || (evalItem.durationSeconds ? `${Math.floor(evalItem.durationSeconds / 60)}:${(evalItem.durationSeconds % 60).toString().padStart(2, "0")}` : "")}</div>
                     </div>
-                    <span>{evalItem.duration || (evalItem.durationSeconds ? `${Math.floor(evalItem.durationSeconds / 60)}:${(evalItem.durationSeconds % 60).toString().padStart(2, "0")}` : "")}</span>
+                    
+                    {evalItem.comments && (
+                      <div className="mt-2 pt-2 border-t border-slate-800/50">
+                        <p className="text-[9px] text-slate-400 italic line-clamp-4">
+                          "{evalItem.comments}"
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <div className="p-2 space-y-1">
-                  <KPIMini label="Product" value={evalItem.kpis.product} />
-                  <KPIMini label="Etiquette" value={evalItem.kpis.etiquette} />
-                  <KPIMini label="Solving" value={evalItem.kpis.solving} />
-                  <KPIMini label="Resolution" value={evalItem.kpis.resolution} />
-                  {(evalItem.fcr !== undefined && evalItem.fcr > 0) ? (
-                    <KPIMini label="FCR" value={evalItem.fcr} />
-                  ) : null}
-                </div>
-
-                {evalItem.comments && (
-                  <div className="px-3 pb-3 border-t border-slate-800/50 mt-2 pt-2">
-                    <p className="text-[9px] text-slate-400 italic line-clamp-2">
-                      "{evalItem.comments}"
-                    </p>
-                  </div>
-                )}
               </div>
             );
           })}
