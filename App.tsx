@@ -105,10 +105,18 @@ const App: React.FC = () => {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [adminViewMode, setAdminViewMode] = useState<'stats' | 'evaluations'>('stats');
 
-  const [dateRange, setDateRange] = useState({
-    start: '2026-02-01',
-    end: new Date().toISOString().split('T')[0]
-  });
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    
+    return {
+      start: oneMonthAgo.toISOString().split('T')[0],
+      end: today.toISOString().split('T')[0]
+    };
+  };
+
+  const [dateRange, setDateRange] = useState(getDefaultDateRange);
 
   useEffect(() => {
     const root = document.documentElement;
