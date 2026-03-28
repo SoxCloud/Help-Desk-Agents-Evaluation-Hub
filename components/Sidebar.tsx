@@ -42,7 +42,7 @@ export const Sidebar = ({ user, activeTab, setActiveTab, onLogout, isDarkMode, t
             key={item.id}
             onClick={() => setActiveTab(item.id)}
             aria-label={item.label}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+            className={`w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
               activeTab === item.id
                 ? 'bg-indigo-600 text-white shadow-lg'
                 : isDarkMode

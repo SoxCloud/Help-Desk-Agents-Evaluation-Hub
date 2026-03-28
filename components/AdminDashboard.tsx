@@ -21,6 +21,7 @@ import {
   ShoppingCart,
   X,
   RefreshCw,
+  Trophy,
 } from "lucide-react";
 import {
   BarChart,
@@ -291,6 +292,103 @@ export const AdminDashboard: React.FC<Props> = ({
   }, [agentsWithFilteredHistory]);
 
   const activeAgents = agentsWithFilteredHistory.filter((a) => a.history.length > 0).length;
+
+  const [sortBy, setSortBy] = useState<'overall' | 'csat' | 'fcr' | 'tickets' | 'interactionRate' | 'abandonedRate' | 'cheeseUpsell'>('overall');
+
+  const performanceRankings = useMemo(() => {
+    return agentsWithFilteredHistory
+      .map(agent => {
+        const answeredCalls = agent.history.reduce((sum, h) => sum + (h.answeredCalls || 0), 0);
+        const abandonedCalls = agent.history.reduce((sum, h) => sum + (h.abandonedCalls || 0), 0);
+        const abandonedRate = answeredCalls > 0
+          ? parseFloat(((abandonedCalls / answeredCalls) * 100).toFixed(1))
+          : 0;
+        
+        const totalTickets = agent.history.reduce((sum, h) => sum + (h.totalTickets || 0), 0);
+        
+        const interactions = agent.history.reduce((sum, h) => sum + (h.interactions || 0), 0);
+        const interactionRate = totalTickets > 0
+          ? parseFloat((interactions / totalTickets).toFixed(1))
+          : 0;
+        
+        const debonairsSales = agent.history.reduce((sum, h) => sum + (h.debonairsSales || 0), 0);
+        const cheeseSales = agent.history.reduce((sum, h) => sum + (h.cheeseSales || 0), 0);
+        const baseSales = debonairsSales - cheeseSales;
+        const cheeseUpsell = baseSales > 0
+          ? parseFloat(((cheeseSales / baseSales) * 100).toFixed(1))
+          : 0;
+
+        const totalScore = agent.evaluations.reduce((sum, e) => sum + (e.score || 0), 0);
+        const avgCSAT = agent.evaluations.length > 0
+          ? Math.round(totalScore / agent.evaluations.length)
+          : 0;
+
+        const totalFCR = agent.evaluations.reduce((sum, e) => sum + (e.fcr || 0), 0);
+        const avgFCR = agent.evaluations.length > 0
+          ? Math.round(totalFCR / agent.evaluations.length)
+          : 0;
+
+        const overallScore = Math.round(
+          (avgCSAT * 0.30) +
+          (avgFCR * 0.25) +
+          (interactionRate >= 3 ? 20 : interactionRate * 6.67) +
+          ((100 - abandonedRate) * 0.15) +
+          (cheeseUpsell * 0.15) +
+          (totalTickets > 0 ? 10 : 0)
+        );
+
+        return {
+          id: agent.id,
+          name: agent.name,
+          avatar: agent.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2),
+          csat: avgCSAT,
+          fcr: avgFCR,
+          tickets: totalTickets,
+          interactionRate: interactionRate,
+          calls: answeredCalls,
+          abandonedRate: abandonedRate,
+          cheeseUpsell: cheeseUpsell,
+          transactions: agent.history.reduce((sum, h) => sum + (h.transactions || 0), 0),
+          overall: overallScore,
+        };
+      })
+      .sort((a, b) => {
+        if (sortBy === 'csat') return b.csat - a.csat;
+        if (sortBy === 'fcr') return b.fcr - a.fcr;
+        if (sortBy === 'tickets') return b.tickets - a.tickets;
+        if (sortBy === 'interactionRate') return b.interactionRate - a.interactionRate;
+        if (sortBy === 'abandonedRate') return a.abandonedRate - b.abandonedRate;
+        if (sortBy === 'cheeseUpsell') return b.cheeseUpsell - a.cheeseUpsell;
+        return b.overall - a.overall;
+      });
+  }, [agentsWithFilteredHistory, sortBy]);
+
+  const exportToCSV = () => {
+    const headers = ['Rank', 'Agent', 'FCR%', 'CSAT%', 'INT/TKT', 'Tickets', 'Abn%', 'Cheese%', 'Overall'];
+    const rows = performanceRankings.map((agent, idx) => [
+      idx + 1,
+      agent.name,
+      agent.fcr,
+      agent.csat,
+      agent.interactionRate,
+      agent.tickets,
+      agent.abandonedRate,
+      agent.cheeseUpsell,
+      agent.overall,
+    ]);
+    
+    const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `performance_rankings_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const topPerformer = performanceRankings[0];
+  const lowestPerformer = performanceRankings[performanceRankings.length - 1];
 
   const handleGenerateInsights = async () => {
     setShowAiPanel(true);
@@ -846,6 +944,213 @@ export const AdminDashboard: React.FC<Props> = ({
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Performance Leaderboard */}
+      <div className="space-y-6">
+        {/* Top Performer Spotlight */}
+        {topPerformer && (
+          <div className="bg-gradient-to-r from-emerald-900/40 via-slate-800 to-slate-900 border border-emerald-500/30 rounded-2xl p-6">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-600 flex items-center justify-center text-3xl font-black text-slate-900 shadow-lg shadow-yellow-400/30">
+                  {topPerformer.avatar}
+                </div>
+                <div className="absolute -top-2 -right-2 text-4xl">🥇</div>
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-1">Top Performer</p>
+                <h3 className="text-2xl font-black text-white">{topPerformer.name}</h3>
+                <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-3">
+                  <div className="bg-slate-800/50 px-3 py-1.5 rounded-lg">
+                    <span className="text-slate-400 text-xs">CSAT</span>
+                    <span className="text-white font-bold ml-1">{topPerformer.csat}%</span>
+                  </div>
+                  <div className="bg-slate-800/50 px-3 py-1.5 rounded-lg">
+                    <span className="text-slate-400 text-xs">FCR</span>
+                    <span className="text-white font-bold ml-1">{topPerformer.fcr}%</span>
+                  </div>
+                  <div className="bg-slate-800/50 px-3 py-1.5 rounded-lg">
+                    <span className="text-slate-400 text-xs">Tickets</span>
+                    <span className="text-white font-bold ml-1">{topPerformer.tickets}</span>
+                  </div>
+                  <div className="bg-slate-800/50 px-3 py-1.5 rounded-lg">
+                    <span className="text-slate-400 text-xs">Int/Tkt</span>
+                    <span className="text-white font-bold ml-1">{topPerformer.interactionRate}</span>
+                  </div>
+                  <div className="bg-emerald-500/20 px-3 py-1.5 rounded-lg border border-emerald-500/30">
+                    <span className="text-emerald-400 text-xs">Overall</span>
+                    <span className="text-emerald-400 font-bold ml-1">{topPerformer.overall}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Filter Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-800/30 border border-slate-700 rounded-xl p-4">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="text-indigo-400" size={18} />
+            <span className="text-white font-semibold">Performance Leaderboard</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-slate-400 text-xs">Sort by:</span>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: 'overall', label: 'Overall' },
+                { key: 'csat', label: 'CSAT' },
+                { key: 'fcr', label: 'FCR' },
+                { key: 'tickets', label: 'Tickets' },
+                { key: 'interactionRate', label: 'Int/Tkt' },
+                { key: 'abandonedRate', label: 'Abn%' },
+                { key: 'cheeseUpsell', label: 'Cheese' },
+              ].map((option) => (
+                <button
+                  key={option.key}
+                  onClick={() => setSortBy(option.key as any)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    sortBy === option.key
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={exportToCSV}
+              className="ml-2 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
+            >
+              <ShoppingCart size={12} /> Export CSV
+            </button>
+          </div>
+        </div>
+
+        {/* Leaderboard Table */}
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-900/50">
+                <tr className="text-[9px] uppercase tracking-wider text-slate-400">
+                  <th className="px-4 py-3 text-left">Rank</th>
+                  <th className="px-4 py-3 text-left">Agent</th>
+                  <th className="px-4 py-3 text-center">FCR%</th>
+                  <th className="px-4 py-3 text-center">CSAT%</th>
+                  <th className="px-4 py-3 text-center">INT/TKT</th>
+                  <th className="px-4 py-3 text-center">Tickets</th>
+                  <th className="px-4 py-3 text-center">Abn%</th>
+                  <th className="px-4 py-3 text-center">Cheese%</th>
+                  <th className="px-4 py-3 text-center">Overall</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/50">
+                {performanceRankings.map((agent, idx) => (
+                  <tr 
+                    key={agent.id} 
+                    className={`hover:bg-indigo-500/10 transition-colors ${
+                      idx === 0 ? 'bg-emerald-900/20' : idx === performanceRankings.length - 1 ? 'bg-amber-900/10' : ''
+                    }`}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800">
+                        {idx === 0 ? (
+                          <span className="text-xl">🥇</span>
+                        ) : idx === 1 ? (
+                          <span className="text-xl">🥈</span>
+                        ) : idx === 2 ? (
+                          <span className="text-xl">🥉</span>
+                        ) : (
+                          <span className="text-slate-400 text-xs font-bold">{idx + 1}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${
+                          idx === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-slate-900' :
+                          idx < 3 ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-slate-900' :
+                          'bg-gradient-to-br from-indigo-600 to-indigo-500 text-white'
+                        }`}>
+                          {agent.avatar}
+                        </div>
+                        <span className="text-white font-medium text-sm">{agent.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-cyan-400 font-bold">{agent.fcr}%</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-purple-400 font-bold">{agent.csat}%</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`font-bold ${agent.interactionRate >= 3 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        {agent.interactionRate}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-violet-400 font-bold">{agent.tickets}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`font-bold ${agent.abandonedRate <= 5 ? 'text-emerald-400' : agent.abandonedRate <= 10 ? 'text-amber-400' : 'text-red-400'}`}>
+                        {agent.abandonedRate}%
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-yellow-400 font-bold">{agent.cheeseUpsell}%</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg font-black text-sm ${
+                        agent.overall >= 90 ? 'bg-emerald-500/20 text-emerald-400' :
+                        agent.overall >= 70 ? 'bg-blue-500/20 text-blue-400' :
+                        agent.overall >= 50 ? 'bg-amber-500/20 text-amber-400' :
+                        'bg-red-500/20 text-red-400'
+                      }`}>
+                        {agent.overall}%
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* FCR vs CSAT Comparison Chart */}
+        <div className="bg-[#1e293b] border border-slate-800 p-6 rounded-2xl">
+          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+            <Activity className="text-indigo-400" size={18} /> FCR vs CSAT Comparison
+          </h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart 
+                data={performanceRankings.slice(0, 10)} 
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} domain={[0, 100]} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
+                  formatter={(value: number, name: string) => [`${value}%`, name === 'fcr' ? 'FCR' : 'CSAT']}
+                />
+                <Bar dataKey="fcr" fill="#06b6d4" radius={[4, 4, 0, 0]} name="fcr" />
+                <Bar dataKey="csat" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="csat" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex justify-center gap-6 mt-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
+              <span className="text-slate-400 text-xs">FCR%</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+              <span className="text-slate-400 text-xs">CSAT%</span>
+            </div>
           </div>
         </div>
       </div>
