@@ -80,7 +80,6 @@ export const AgentDashboard: React.FC<Props> = ({
   const [coachLoading, setCoachLoading] = useState(false);
   const [coachError, setCoachError] = useState<string | null>(null);
   const [showTrends, setShowTrends] = useState(false);
-  const [mood, setMood] = useState<'great' | 'good' | 'okay' | 'tired' | null>(null);
   const [tipIndex, setTipIndex] = useState(0);
   const [isEditingGoals, setIsEditingGoals] = useState(false);
   const [goals, setGoals] = useState([
@@ -883,41 +882,6 @@ export const AgentDashboard: React.FC<Props> = ({
               >
                 Deep Dive Insights →
               </button>
-            </div>
-
-            {/* Mood Tracker */}
-            <div className="bg-gradient-to-br from-indigo-900/30 to-purple-900/30 rounded-2xl p-6 border border-indigo-500/30">
-              <h4 className="text-white font-bold flex items-center gap-2 mb-4">
-                <Heart size={18} className="text-rose-400" />
-                How are you feeling today?
-              </h4>
-              <div className="flex gap-2 justify-between">
-                {[
-                  { mood: 'great', emoji: '🚀', label: 'Great' },
-                  { mood: 'good', emoji: '😊', label: 'Good' },
-                  { mood: 'okay', emoji: '😐', label: 'Okay' },
-                  { mood: 'tired', emoji: '😴', label: 'Tired' },
-                ].map((item) => (
-                  <button
-                    key={item.mood}
-                    onClick={() => setMood(item.mood as any)}
-                    aria-label={`Feeling ${item.label.toLowerCase()}`}
-                    className={`flex-1 p-3 rounded-xl text-center transition-all ${
-                      mood === item.mood
-                        ? 'bg-indigo-600 text-white scale-105'
-                        : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700'
-                    }`}
-                  >
-                    <span className="text-lg block mb-1" aria-hidden="true">{item.emoji}</span>
-                    <span className="text-[8px] font-bold">{item.label}</span>
-                  </button>
-                ))}
-              </div>
-              {mood && (
-                <p className="text-center text-xs text-indigo-400 mt-3 animate-pulse">
-                  Thanks for sharing! Your feedback helps us improve.
-                </p>
-              )}
             </div>
 
             {/* Weekly Goals */}
