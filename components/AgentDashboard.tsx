@@ -611,7 +611,7 @@ export const AgentDashboard: React.FC<Props> = ({
                 title="Credits"
                 value={totalCreditsDiscounts}
                 sub="total given"
-                icon={<Percent />}
+                icon={<Gift />}
                 color="from-purple-500 to-pink-500"
               />
               <PremiumStatCard
