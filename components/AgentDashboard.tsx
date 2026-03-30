@@ -3,6 +3,7 @@ import { generateCoachingFeedback } from "../services/grokService";
 import { Agent } from "../types";
 import {
   PhoneCall,
+  PhoneOff,
   CheckCircle,
   Clock,
   Target,
@@ -165,6 +166,13 @@ export const AgentDashboard: React.FC<Props> = ({
     (sum, h) => sum + (h.answeredCalls || 0),
     0,
   );
+  const totalAbandoned = filteredHistory.reduce(
+    (sum, h) => sum + (h.abandonedCalls || 0),
+    0,
+  );
+  const totalIncoming = totalCalls + totalAbandoned;
+  const asr = totalIncoming > 0 ? ((totalCalls / totalIncoming) * 100).toFixed(1) : "0";
+  
   const totalTickets = filteredHistory.reduce(
     (sum, h) => sum + (h.totalTickets || 0),
     0,
@@ -530,31 +538,17 @@ export const AgentDashboard: React.FC<Props> = ({
                 trend={totalCalls > 40 ? `+${totalCalls - 40}` : `${totalCalls - 40}`}
               />
               <PremiumStatCard
-                title="Tickets"
-                value={totalTickets}
-                sub="in selected range"
-                icon={<LayoutGrid />}
-                color="from-violet-500 to-purple-500"
+                title="Abandoned Calls"
+                value={totalAbandoned}
+                sub="missed calls"
+                icon={<PhoneCall />}
+                color="from-rose-500 to-red-500"
               />
               <PremiumStatCard
-                title="Resolution Time"
-                value={`${avgResolutionTimeMinutes}m`}
-                sub="avg per ticket"
-                icon={<Clock />}
-                color="from-sky-500 to-cyan-500"
-              />
-              <PremiumStatCard
-                title="CSAT Score"
-                value={`${currentScore}%`}
-                sub="latest evaluation"
-                icon={<Target />}
-                color="from-emerald-500 to-teal-500"
-              />
-              <PremiumStatCard
-                title="Resolution Rate"
-                value={`${weightedResolutionRate}%`}
-                sub="success rate"
-                icon={<CheckCircle />}
+                title="ASR"
+                value={`${asr}%`}
+                sub="Answer Rate"
+                icon={<PhoneCall />}
                 color="from-emerald-500 to-green-500"
               />
               <PremiumStatCard
@@ -563,6 +557,13 @@ export const AgentDashboard: React.FC<Props> = ({
                 sub="first call resolution"
                 icon={<CheckCircle />}
                 color="from-green-500 to-emerald-500"
+              />
+              <PremiumStatCard
+                title="Tickets"
+                value={totalTickets}
+                sub="in selected range"
+                icon={<LayoutGrid />}
+                color="from-violet-500 to-purple-500"
               />
               <PremiumStatCard
                 title="Interactions"
@@ -578,7 +579,27 @@ export const AgentDashboard: React.FC<Props> = ({
                 icon={<Activity />}
                 color="from-cyan-500 to-teal-500"
               />
-
+              <PremiumStatCard
+                title="Resolution Rate"
+                value={`${weightedResolutionRate}%`}
+                sub="success rate"
+                icon={<CheckCircle />}
+                color="from-emerald-500 to-green-500"
+              />
+              <PremiumStatCard
+                title="Resolution Time"
+                value={`${avgResolutionTimeMinutes}m`}
+                sub="avg per ticket"
+                icon={<Clock />}
+                color="from-sky-500 to-cyan-500"
+              />
+              <PremiumStatCard
+                title="Transactions"
+                value={totalTransactions}
+                sub="total completed"
+                icon={<ShoppingCart />}
+                color="from-teal-500 to-cyan-500"
+              />
               <PremiumStatCard
                 title="Cheese Upsell"
                 value={`${cheeseUpsellPercentage}%`}
@@ -594,18 +615,11 @@ export const AgentDashboard: React.FC<Props> = ({
                 color="from-purple-500 to-pink-500"
               />
               <PremiumStatCard
-                title="Transactions"
-                value={totalTransactions}
-                sub="total completed"
-                icon={<ShoppingCart />}
-                color="from-teal-500 to-cyan-500"
-              />
-              <PremiumStatCard
-                title="FCR"
-                value={avgFCR}
-                sub="first call resolution"
-                icon={<Zap />}
-                color="from-cyan-500 to-blue-500"
+                title="CSAT Score"
+                value={`${currentScore}%`}
+                sub="latest evaluation"
+                icon={<Target />}
+                color="from-emerald-500 to-teal-500"
               />
             </div>
 
@@ -1049,7 +1063,7 @@ export const AgentDashboard: React.FC<Props> = ({
                     <th className="px-3 py-3 text-center">TICKETS</th>
                     <th className="px-3 py-3 text-center">SOLVED</th>
                     <th className="px-3 py-3 text-center">CALLS</th>
-                    <th className="px-3 py-3 text-center">ABN%</th>
+                    <th className="px-3 py-3 text-center">ASR</th>
                     <th className="px-3 py-3 text-center">CSAT</th>
                     <th className="px-3 py-3 text-center">FCR</th>
                     <th className="px-3 py-3 text-center">CHEESE</th>
@@ -1070,7 +1084,8 @@ export const AgentDashboard: React.FC<Props> = ({
                         : 0;
                       const totalCalls = a.history.reduce((s, h) => s + (h.answeredCalls || 0), 0);
                       const totalAbandoned = a.history.reduce((s, h) => s + (h.abandonedCalls || 0), 0);
-                      const abandonedRate = totalCalls > 0 ? ((totalAbandoned / totalCalls) * 100).toFixed(1) : "0";
+                      const totalIncoming = totalCalls + totalAbandoned;
+                      const answerRate = totalIncoming > 0 ? ((totalCalls / totalIncoming) * 100).toFixed(1) : "0";
                       const totalTickets = a.history.reduce((s, h) => s + (h.totalTickets || 0), 0);
                       const solved = a.history.reduce((s, h) => s + (h.solvedTickets || 0), 0);
                       const debSales = a.history.reduce((s, h) => s + (h.debonairsSales || 0), 0);
@@ -1103,8 +1118,8 @@ export const AgentDashboard: React.FC<Props> = ({
                           <td className="px-3 py-3 text-center font-black text-blue-400">
                             {totalCalls}
                           </td>
-                          <td className="px-3 py-3 text-center font-black text-amber-400">
-                            {abandonedRate}%
+                          <td className="px-3 py-3 text-center font-black text-emerald-400">
+                            {answerRate}%
                           </td>
                           <td className="px-3 py-3 text-center font-black text-indigo-400">
                             {latestScore}%

@@ -107,6 +107,10 @@ export const AdminDashboard: React.FC<Props> = ({
     ? ((totalAbandonedCalls / totalCalls) * 100).toFixed(1)
     : "0";
 
+  const teamASR = (totalCalls + totalAbandonedCalls) > 0
+    ? ((totalCalls / (totalCalls + totalAbandonedCalls)) * 100).toFixed(1)
+    : "0";
+
   // EVALUATION STATS
   const allEvaluations = agentsWithFilteredHistory.flatMap((a) => a.evaluations);
 
@@ -293,15 +297,16 @@ export const AdminDashboard: React.FC<Props> = ({
 
   const activeAgents = agentsWithFilteredHistory.filter((a) => a.history.length > 0).length;
 
-  const [sortBy, setSortBy] = useState<'overall' | 'csat' | 'fcr' | 'tickets' | 'interactionRate' | 'abandonedRate' | 'cheeseUpsell'>('overall');
+  const [sortBy, setSortBy] = useState<'overall' | 'csat' | 'fcr' | 'tickets' | 'interactionRate' | 'answerRate' | 'cheeseUpsell'>('overall');
 
   const performanceRankings = useMemo(() => {
     return agentsWithFilteredHistory
       .map(agent => {
         const answeredCalls = agent.history.reduce((sum, h) => sum + (h.answeredCalls || 0), 0);
         const abandonedCalls = agent.history.reduce((sum, h) => sum + (h.abandonedCalls || 0), 0);
-        const abandonedRate = answeredCalls > 0
-          ? parseFloat(((abandonedCalls / answeredCalls) * 100).toFixed(1))
+        const totalCalls = answeredCalls + abandonedCalls;
+        const answerRate = totalCalls > 0
+          ? parseFloat(((answeredCalls / totalCalls) * 100).toFixed(1))
           : 0;
         
         const totalTickets = agent.history.reduce((sum, h) => sum + (h.totalTickets || 0), 0);
@@ -332,7 +337,7 @@ export const AdminDashboard: React.FC<Props> = ({
           (avgCSAT * 0.30) +
           (avgFCR * 0.25) +
           (interactionRate >= 3 ? 20 : interactionRate * 6.67) +
-          ((100 - abandonedRate) * 0.15) +
+          (answerRate * 0.15) +
           (cheeseUpsell * 0.15) +
           (totalTickets > 0 ? 10 : 0)
         );
@@ -346,7 +351,7 @@ export const AdminDashboard: React.FC<Props> = ({
           tickets: totalTickets,
           interactionRate: interactionRate,
           calls: answeredCalls,
-          abandonedRate: abandonedRate,
+          answerRate: answerRate,
           cheeseUpsell: cheeseUpsell,
           transactions: agent.history.reduce((sum, h) => sum + (h.transactions || 0), 0),
           overall: overallScore,
@@ -357,14 +362,14 @@ export const AdminDashboard: React.FC<Props> = ({
         if (sortBy === 'fcr') return b.fcr - a.fcr;
         if (sortBy === 'tickets') return b.tickets - a.tickets;
         if (sortBy === 'interactionRate') return b.interactionRate - a.interactionRate;
-        if (sortBy === 'abandonedRate') return a.abandonedRate - b.abandonedRate;
+        if (sortBy === 'answerRate') return b.answerRate - a.answerRate;
         if (sortBy === 'cheeseUpsell') return b.cheeseUpsell - a.cheeseUpsell;
         return b.overall - a.overall;
       });
   }, [agentsWithFilteredHistory, sortBy]);
 
   const exportToCSV = () => {
-    const headers = ['Rank', 'Agent', 'FCR%', 'CSAT%', 'INT/TKT', 'Tickets', 'Abn%', 'Cheese%', 'Overall'];
+    const headers = ['Rank', 'Agent', 'FCR%', 'CSAT%', 'INT/TKT', 'Tickets', 'ASR', 'Cheese%', 'Overall'];
     const rows = performanceRankings.map((agent, idx) => [
       idx + 1,
       agent.name,
@@ -372,7 +377,7 @@ export const AdminDashboard: React.FC<Props> = ({
       agent.csat,
       agent.interactionRate,
       agent.tickets,
-      agent.abandonedRate,
+      agent.answerRate,
       agent.cheeseUpsell,
       agent.overall,
     ]);
@@ -528,6 +533,15 @@ export const AdminDashboard: React.FC<Props> = ({
             change={`${callAbandonedRate}%`}
             icon={<Activity className="text-rose-400" />}
             showPercentage={false}
+          />
+          
+          {/* Team ASR */}
+          <MetricCard
+            title="Team ASR"
+            value={teamASR}
+            change="Answer Rate"
+            icon={<PhoneCall className="text-emerald-400" />}
+            showPercentage={true}
           />
           
           {/* Numbers */}
@@ -800,7 +814,7 @@ export const AdminDashboard: React.FC<Props> = ({
                   <th className="px-3 py-3 text-center">FCR%</th>
                   <th className="px-3 py-3 text-center">ANS</th>
                   <th className="px-3 py-3 text-center">ABN</th>
-                  <th className="px-3 py-3 text-center">ABN%</th>
+                  <th className="px-3 py-3 text-center">ASR</th>
                   <th className="px-3 py-3 text-center">CHEESE</th>
                   <th className="px-3 py-3 text-center">CSAT</th>
                   <th className="px-3 py-3 text-center">CRED</th>
@@ -814,12 +828,13 @@ export const AdminDashboard: React.FC<Props> = ({
                     (s, h) => s + (h.answeredCalls || 0),
                     0,
                   );
-                  const totalAbandoned = agent.history.reduce(
+                    const totalAbandoned = agent.history.reduce(
                     (s, h) => s + (h.abandonedCalls || 0),
                     0,
                   );
-                  const abandonedRate = totalAnswered > 0
-                    ? ((totalAbandoned / totalAnswered) * 100).toFixed(1)
+                  const totalIncoming = totalAnswered + totalAbandoned;
+                  const answerRate = totalIncoming > 0
+                    ? ((totalAnswered / totalIncoming) * 100).toFixed(1)
                     : "0";
                   const totalTickets = agent.history.reduce(
                     (s, h) => s + (h.totalTickets || 0),
@@ -911,10 +926,10 @@ export const AdminDashboard: React.FC<Props> = ({
                     </td>
                     <td className="px-3 py-3 text-center">
                       <span className={`font-black ${
-                        parseFloat(abandonedRate) > 5 ? 'text-rose-400' : 
-                        parseFloat(abandonedRate) > 2 ? 'text-amber-400' : 'text-emerald-400'
+                        parseFloat(answerRate) >= 95 ? 'text-emerald-400' : 
+                        parseFloat(answerRate) >= 90 ? 'text-amber-400' : 'text-rose-400'
                       }`}>
-                        {abandonedRate}%
+                        {answerRate}%
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center font-black text-amber-400">
@@ -1005,7 +1020,7 @@ export const AdminDashboard: React.FC<Props> = ({
                 { key: 'fcr', label: 'FCR' },
                 { key: 'tickets', label: 'Tickets' },
                 { key: 'interactionRate', label: 'Int/Tkt' },
-                { key: 'abandonedRate', label: 'Abn%' },
+                { key: 'answerRate', label: 'ASR' },
                 { key: 'cheeseUpsell', label: 'Cheese' },
               ].map((option) => (
                 <button
@@ -1042,7 +1057,7 @@ export const AdminDashboard: React.FC<Props> = ({
                   <th className="px-4 py-3 text-center">CSAT%</th>
                   <th className="px-4 py-3 text-center">INT/TKT</th>
                   <th className="px-4 py-3 text-center">Tickets</th>
-                  <th className="px-4 py-3 text-center">Abn%</th>
+                  <th className="px-4 py-3 text-center">ASR</th>
                   <th className="px-4 py-3 text-center">Cheese%</th>
                   <th className="px-4 py-3 text-center">Overall</th>
                 </tr>
@@ -1095,8 +1110,8 @@ export const AdminDashboard: React.FC<Props> = ({
                       <span className="text-violet-400 font-bold">{agent.tickets}</span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`font-bold ${agent.abandonedRate <= 5 ? 'text-emerald-400' : agent.abandonedRate <= 10 ? 'text-amber-400' : 'text-red-400'}`}>
-                        {agent.abandonedRate}%
+                      <span className={`font-bold ${agent.answerRate >= 95 ? 'text-emerald-400' : agent.answerRate >= 90 ? 'text-amber-400' : 'text-red-400'}`}>
+                        {agent.answerRate}%
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
