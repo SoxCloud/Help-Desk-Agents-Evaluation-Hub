@@ -107,11 +107,10 @@ const App: React.FC = () => {
 
   const getDefaultDateRange = () => {
     const today = new Date();
-    const oneMonthAgo = new Date(today);
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     
     return {
-      start: oneMonthAgo.toISOString().split('T')[0],
+      start: firstDayOfMonth.toISOString().split('T')[0],
       end: today.toISOString().split('T')[0]
     };
   };
