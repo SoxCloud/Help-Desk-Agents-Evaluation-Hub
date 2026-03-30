@@ -528,7 +528,7 @@ export const AgentDashboard: React.FC<Props> = ({
           {/* Main Content Area */}
           <div className="lg:col-span-8 space-y-6">
             {/* STAT CARDS GRID - UPDATED with requested changes */}
-            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
               <PremiumStatCard
                 title="Calls Handled"
                 value={totalCalls}
@@ -573,7 +573,7 @@ export const AgentDashboard: React.FC<Props> = ({
                 color="from-indigo-500 to-blue-500"
               />
               <PremiumStatCard
-                title="Avg Interactions/Ticket"
+                title="Avg Interactions"
                 value={totalTickets > 0 ? (interactions / totalTickets).toFixed(1) : "0"}
                 sub="per ticket"
                 icon={<Activity />}
@@ -608,7 +608,7 @@ export const AgentDashboard: React.FC<Props> = ({
                 color="from-amber-500 to-yellow-500"
               />
               <PremiumStatCard
-                title="Credits/Discounts"
+                title="Credits"
                 value={totalCreditsDiscounts}
                 sub="total given"
                 icon={<Percent />}
@@ -1209,20 +1209,20 @@ export const AgentDashboard: React.FC<Props> = ({
 
 /* STYLED COMPONENTS */
 const PremiumStatCard = ({ title, value, sub, icon, color, trend }: any) => (
-  <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl group hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/20">
-    <div className="flex justify-between items-start mb-4">
-      <div className={`p-3 rounded-xl bg-gradient-to-br ${color} shadow-lg`}>
-        {React.cloneElement(icon, { className: "text-white", size: 20 })}
+  <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-3 rounded-xl group hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/20">
+    <div className="flex justify-between items-start mb-2">
+      <div className={`p-2 rounded-lg bg-gradient-to-br ${color} shadow-lg`}>
+        {React.cloneElement(icon, { className: "text-white", size: 14 })}
       </div>
       {trend && (
-        <span className={`text-xs font-bold ${trend.startsWith('+') ? 'text-emerald-400' : 'text-rose-400'}`}>
+        <span className={`text-[10px] font-bold ${trend.startsWith('+') ? 'text-emerald-400' : 'text-rose-400'}`}>
           {trend}
         </span>
       )}
     </div>
-    <p className="text-slate-400 text-xs uppercase font-bold mb-1">{title}</p>
-    <p className="text-2xl font-black text-white mb-1">{value}</p>
-    <p className="text-slate-500 text-[10px]">{sub}</p>
+    <p className="text-slate-400 text-[10px] uppercase font-bold mb-0.5">{title}</p>
+    <p className="text-lg font-black text-white mb-0.5">{value}</p>
+    <p className="text-slate-500 text-[8px]">{sub}</p>
   </div>
 );
 
