@@ -1215,6 +1215,10 @@ export const AdminDashboard: React.FC<Props> = ({
               ) : null}
             </div>
             
+            <p className="text-[10px] text-slate-500 mt-2 italic">
+              * Note: This is AI-generated information and may contain inaccuracies. Please verify important data.
+            </p>
+            
             <button 
               onClick={handleGenerateInsights}
               disabled={aiLoading}
