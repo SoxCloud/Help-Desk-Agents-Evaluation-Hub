@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Agent } from "../types";
 import { generateTeamInsights } from "../services/grokService";
 import {
@@ -51,6 +51,28 @@ export const AdminDashboard: React.FC<Props> = ({
   const [aiLoading, setAiLoading] = useState(false);
   const [aiText, setAiText] = useState("");
   const [aiError, setAiError] = useState("");
+  const [lastRefresh, setLastRefresh] = useState<string>(new Date().toISOString());
+
+  // Auto-refresh at 8am daily
+  useEffect(() => {
+    const checkAndRefresh = () => {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      
+      // Check if it's 8:00 AM (within 1 minute window)
+      if (currentHour === 8 && currentMinute === 0) {
+        setLastRefresh(now.toISOString());
+        window.location.reload();
+      }
+    };
+
+    // Check every minute
+    const interval = setInterval(checkAndRefresh, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const startDate = dateRange.start ? new Date(dateRange.start) : null;
   const endDate = dateRange.end ? new Date(dateRange.end) : null;
 
@@ -1237,8 +1259,10 @@ export const AdminDashboard: React.FC<Props> = ({
 
 // MetricCard component - with showPercentage control
 const MetricCard = ({ title, value, change, icon, showPercentage = false }: any) => {
-  // Don't add % if showPercentage is false
-  const displayValue = showPercentage ? `${value}%` : value;
+  // Handle undefined values - show just "%" or "-"
+  const displayValue = value !== undefined && value !== null
+    ? (showPercentage ? `${value}%` : value)
+    : (showPercentage ? '%' : '-');
   
   return (
     <div className="bg-[#1e293b] border border-slate-800 p-4 rounded-2xl relative overflow-hidden group hover:border-indigo-500/50 transition-all">
