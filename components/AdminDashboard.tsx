@@ -729,7 +729,7 @@ export const AdminDashboard: React.FC<Props> = ({
                   {(() => {
                     const total = chartData.reduce((sum, item) => sum + (item.total || 0), 0);
                     const solved = chartData.reduce((sum, item) => sum + (item.solved || 0), 0);
-                    return total > 0 ? `${Math.round((solved / total) * 100)}%` : '0%';
+                    return total > 0 ? `${((solved / total) * 100).toFixed(1)}%` : '0%';
                   })()}
                 </p>
               </div>
