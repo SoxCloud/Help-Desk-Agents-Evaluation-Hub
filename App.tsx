@@ -107,20 +107,30 @@ const App: React.FC = () => {
 
   const getDefaultDateRange = () => {
     const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    
+    const formatDate = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
     
     return {
-      start: firstDayOfMonth.toISOString().split('T')[0],
-      end: today.toISOString().split('T')[0]
+      start: formatDate(firstDayOfMonth),
+      end: formatDate(today)
     };
   };
 
   const [dateRange, setDateRange] = useState(getDefaultDateRange);
 
-  // Reset date range to default on mount to ensure first day of month
+  // Reset date range to default on every login/render to ensure first day of month
   useEffect(() => {
-    setDateRange(getDefaultDateRange());
-  }, []);
+    const defaultRange = getDefaultDateRange();
+    setDateRange(defaultRange);
+  }, [user]); // Reset when user changes (login/logout)
 
   useEffect(() => {
     const root = document.documentElement;
