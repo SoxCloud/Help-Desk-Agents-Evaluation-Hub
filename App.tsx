@@ -117,6 +117,11 @@ const App: React.FC = () => {
 
   const [dateRange, setDateRange] = useState(getDefaultDateRange);
 
+  // Reset date range to default on mount to ensure first day of month
+  useEffect(() => {
+    setDateRange(getDefaultDateRange());
+  }, []);
+
   useEffect(() => {
     const root = document.documentElement;
     if (isDarkMode) {
