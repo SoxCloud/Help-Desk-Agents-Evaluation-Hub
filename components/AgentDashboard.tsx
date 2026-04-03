@@ -126,11 +126,9 @@ export const AgentDashboard: React.FC<Props> = ({
   const latestEval =
     filteredEvaluations.length > 0
       ? filteredEvaluations[filteredEvaluations.length - 1]
-      : (agent.evaluations || [])[agent.evaluations?.length - 1];
+      : null;
 
-  const evaluationsToUse = filteredEvaluations.length > 0
-    ? filteredEvaluations
-    : (agent.evaluations || []);
+  const evaluationsToUse = filteredEvaluations;
 
   const totalEvaluations = evaluationsToUse.length;
   const totalScore = evaluationsToUse.reduce((sum, evalItem) => sum + (evalItem.score || 0), 0);
