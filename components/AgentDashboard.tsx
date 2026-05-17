@@ -121,7 +121,11 @@ export const AgentDashboard: React.FC<Props> = ({
     isWithinRange(e.date),
   );
   
-  console.log("Agent=" + agent.name + " View=" + viewMode + " Evals=" + agent.evaluations?.length + " Filtered=" + filteredEvaluations.length);
+  const filteredAgents = agents.map((a) => ({
+    ...a,
+    history: (a.history || []).filter((h) => isWithinRange(h.date)),
+    evaluations: (a.evaluations || []).filter((e) => isWithinRange(e.date)),
+  }));
 
   const latestEval =
     filteredEvaluations.length > 0
@@ -1068,29 +1072,32 @@ export const AgentDashboard: React.FC<Props> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50">
-                  {[...agents]
+                   {[...filteredAgents]
                     .sort((a, b) => {
                       const ticketsA = a.history.reduce((s, h) => s + (h.totalTickets || 0), 0);
                       const ticketsB = b.history.reduce((s, h) => s + (h.totalTickets || 0), 0);
                       return ticketsB - ticketsA;
                     })
                     .map((a) => {
-                      // Calculate average CSAT score across all evaluations
-                      const totalScore = a.evaluations.reduce((s, e) => s + (e.score || 0), 0);
-                      const latestScore = a.evaluations.length > 0
-                        ? Math.round(totalScore / a.evaluations.length)
+                      // Filter by selected date range
+                      const filteredHistory = a.history.filter(h => isWithinRange(h.date));
+                      const filteredEvals = a.evaluations.filter(e => isWithinRange(e.date));
+                      // Calculate average CSAT score across filtered evaluations
+                      const totalScore = filteredEvals.reduce((s, e) => s + (e.score || 0), 0);
+                      const latestScore = filteredEvals.length > 0
+                        ? Math.round(totalScore / filteredEvals.length)
                         : 0;
-                      const totalCalls = a.history.reduce((s, h) => s + (h.answeredCalls || 0), 0);
-                      const totalAbandoned = a.history.reduce((s, h) => s + (h.abandonedCalls || 0), 0);
+                      const totalCalls = filteredHistory.reduce((s, h) => s + (h.answeredCalls || 0), 0);
+                      const totalAbandoned = filteredHistory.reduce((s, h) => s + (h.abandonedCalls || 0), 0);
                       const totalIncoming = totalCalls + totalAbandoned;
                       const answerRate = totalIncoming > 0 ? ((totalCalls / totalIncoming) * 100).toFixed(1) : "0";
-                      const totalTickets = a.history.reduce((s, h) => s + (h.totalTickets || 0), 0);
-                      const solved = a.history.reduce((s, h) => s + (h.solvedTickets || 0), 0);
-                      const debSales = a.history.reduce((s, h) => s + (h.debonairsSales || 0), 0);
-                      const cheeseSales = a.history.reduce((s, h) => s + (h.cheeseSales || 0), 0);
+                      const totalTickets = filteredHistory.reduce((s, h) => s + (h.totalTickets || 0), 0);
+                      const solved = filteredHistory.reduce((s, h) => s + (h.solvedTickets || 0), 0);
+                      const debSales = filteredHistory.reduce((s, h) => s + (h.debonairsSales || 0), 0);
+                      const cheeseSales = filteredHistory.reduce((s, h) => s + (h.cheeseSales || 0), 0);
                       // Calculate average FCR from evaluations (only where FCR is scored)
-                      const fcrTotal = a.evaluations.reduce((s, e) => s + (e.fcr && e.fcr > 0 ? e.fcr : 0), 0);
-                      const fcrCount = a.evaluations.filter(e => e.fcr && e.fcr > 0).length;
+                      const fcrTotal = filteredEvals.reduce((s, e) => s + (e.fcr && e.fcr > 0 ? e.fcr : 0), 0);
+                      const fcrCount = filteredEvals.filter(e => e.fcr && e.fcr > 0).length;
                       const agentFCR = fcrCount > 0 ? Math.round(fcrTotal / fcrCount) : 0;
                       const cheeseUpsell = debSales > cheeseSales ? ((cheeseSales / (debSales - cheeseSales)) * 100).toFixed(1) : "0";
                       const isMe = a.email.toLowerCase() === agent.email.toLowerCase();
