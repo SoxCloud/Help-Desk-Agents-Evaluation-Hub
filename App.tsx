@@ -37,14 +37,6 @@ const VALID_USERS: ValidUser[] = [
     avatarUrl: 'https://ui-avatars.com/api/?name=Moses+Nhlapho&background=random'
   },
   {
-    email: 'qhamabracken@gmail.com',
-    password: 'dialndinec',
-    id: 'claire',
-    name: 'Claire Makeleni',
-    role: UserRole.AGENT,
-    avatarUrl: 'https://ui-avatars.com/api/?name=Claire+Makeleni&background=random'
-  },
-  {
     email: 'leratolucytwala@gmail.com',
     password: 'dialndinel',
     id: 'lerato',
@@ -91,6 +83,14 @@ const VALID_USERS: ValidUser[] = [
     name: 'Neo Tshabalala',
     role: UserRole.AGENT,
     avatarUrl: 'https://ui-avatars.com/api/?name=Neo+Tshabalala&background=random'
+  },
+  {
+    email: 'ofentsemcallcenter@gmail.com',
+    password: 'dialndineo',
+    id: 'ofentse',
+    name: 'Ofentse Mashigo',
+    role: UserRole.AGENT,
+    avatarUrl: 'https://ui-avatars.com/api/?name=Ofentse+Mashigo&background=random'
   }
 ];
 
@@ -319,27 +319,21 @@ const App: React.FC = () => {
               // Find agent by email instead of ID
               const foundAgent = agents.find(a => a.email.toLowerCase() === user.email.toLowerCase());
               
-              if (!foundAgent) {
-                return (
-                  <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                      <AlertCircle className="mx-auto text-red-500 mb-4" size={48} />
-                      <h3 className="text-white text-lg font-bold">Agent data not available</h3>
-                      <p className="text-slate-400 mt-2">Please contact your administrator</p>
-                      <button 
-                        onClick={() => setUser(null)}
-                        className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors"
-                      >
-                        Back to Login
-                      </button>
-                    </div>
-                  </div>
-                );
-              }
+              // Fallback: if agent isn't in the sheet yet, create a minimal agent from login data
+              const agent = foundAgent || {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: UserRole.AGENT,
+                status: 'OFFLINE' as const,
+                avatarUrl: user.avatarUrl,
+                history: [],
+                evaluations: [],
+              };
               
               return (
                 <AgentDashboard
-                  agent={foundAgent}
+                  agent={agent}
                   agents={agents}
                   dateRange={dateRange}
                   onDateChange={setDateRange}
