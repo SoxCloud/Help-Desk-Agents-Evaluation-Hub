@@ -156,7 +156,7 @@ const App: React.FC = () => {
     setLoading(true);
     try {
       const data = await fetchAllDashboardData();
-      setAgents(data.agents);
+      setAgents(data.agents.filter(a => a.email !== 'qhamabracken@gmail.com'));
       console.log("✅ Loaded agents from Google Sheets:", data.agents.map(a => ({ 
         name: a.name, 
         email: a.email, 
