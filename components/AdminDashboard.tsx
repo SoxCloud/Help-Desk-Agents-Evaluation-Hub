@@ -85,7 +85,7 @@ export const AdminDashboard: React.FC<Props> = ({
   };
 
   // Filtered data by date range
-  const adminEmails = ['sogcinwacallcenter@gmail.com', 'tshabalaladialndine@gmail.com'];
+  const adminEmails = ['tshabalaladialndine@gmail.com'];
   const agentsWithFilteredHistory = useMemo(() => {
     const filtered = agents
       .filter((agent) => !adminEmails.includes(agent.email.toLowerCase()))

@@ -4,7 +4,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { AgentDashboard } from './components/AgentDashboard';
 import { AgentRoster } from './components/AgentRoster';
 import { Login } from './components/Login';
-import { User, UserRole, Agent, ValidUser } from './types';
+import { User, UserRole, Agent, AgentStatus, ValidUser } from './types';
 import { fetchAllDashboardData } from './services/sheetService';
 import { RefreshCw, Menu, X, AlertCircle } from 'lucide-react';
 
@@ -193,7 +193,7 @@ const App: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-slate-100 dark:from-[#0f172a] dark:to-[#1e293b] text-slate-900 dark:text-white">
+    <div className="h-screen flex flex-col items-center justify-center bg-linear-to-br from-indigo-50 to-slate-100 dark:from-[#0f172a] dark:to-[#1e293b] text-slate-900 dark:text-white">
       <RefreshCw className="animate-spin mb-4 text-indigo-600 dark:text-indigo-500" size={32} />
       <p className="font-bold tracking-widest animate-pulse text-xs text-indigo-600 dark:text-indigo-400 text-center px-4">
         SYNCING OMNIDESK DATA...
@@ -207,8 +207,8 @@ const App: React.FC = () => {
     <div
       className={`min-h-screen flex flex-col lg:flex-row transition-all duration-300 ${
         isDarkMode 
-          ? 'bg-gradient-to-br from-[#0f172a] to-[#1a2639] text-white' 
-          : 'bg-gradient-to-br from-slate-50 to-white text-slate-900'
+          ? 'bg-linear-to-br from-[#0f172a] to-[#1a2639] text-white' 
+          : 'bg-linear-to-br from-slate-50 to-white text-slate-900'
       }`}
     >
       {/* Mobile header with menu button */}
@@ -261,7 +261,7 @@ const App: React.FC = () => {
         {/* Spacer for mobile header */}
         <div className="h-16 lg:hidden"></div>
         
-        <div className="p-4 sm:p-6 lg:p-8 max-w-[2000px] mx-auto pb-8">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-500 mx-auto pb-8">
           {user.role === UserRole.ADMIN ? (
             selectedAgentId ? (
               (() => {
@@ -325,7 +325,7 @@ const App: React.FC = () => {
                 name: user.name,
                 email: user.email,
                 role: UserRole.AGENT,
-                status: 'OFFLINE' as const,
+                status: AgentStatus.OFFLINE,
                 avatarUrl: user.avatarUrl,
                 history: [],
                 evaluations: [],
