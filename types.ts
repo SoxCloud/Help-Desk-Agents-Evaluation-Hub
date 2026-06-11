@@ -31,7 +31,6 @@ export interface DailyStats {
   cheeseSales?: number;
   cheeseUpsellPercentage?: number;
   creditsDiscounts?: number;
-  fcr?: number; 
 }
 
 export interface Kpis {
@@ -56,9 +55,6 @@ export interface AgentEval {
   positivePoints?: string;
   improvementAreas?: string;
   comments?: string;
-  // Add these new fields to match your spreadsheet
-  fcr?: number;          // First Call Resolution score
-  resolution?: number;   // Resolution score
 }
 
 export interface Agent {

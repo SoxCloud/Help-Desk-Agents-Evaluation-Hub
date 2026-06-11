@@ -145,7 +145,6 @@ export const fetchAllDashboardData = async () => {
   const idxPhoneEtiquette = eIdx.findColumn(["phoneEtiquetteScore"]);
   const idxProblemSolving = eIdx.findColumn(["problemSolvingScore"]);
   const idxProductKnowledge = eIdx.findColumn(["productKnowledgeScore"]);
-  const idxFCR = eIdx.findColumn(["FCR"]);
   const idxResolution = eIdx.findColumn(["Resolution outcome", "Resolution"]);
   const idxComment = eIdx.findColumn(["evaluatorComment"]);
   
@@ -164,7 +163,6 @@ export const fetchAllDashboardData = async () => {
     phoneEtiquette: idxPhoneEtiquette,
     problemSolving: idxProblemSolving,
     productKnowledge: idxProductKnowledge,
-    fcr: idxFCR,
     resolution: idxResolution,
     comment: idxComment,
     overallRating: idxOverallRating
@@ -213,11 +211,8 @@ export const fetchAllDashboardData = async () => {
     const productKnowledge = rawProductKnowledge ? parseInt(rawProductKnowledge, 10) || 0 : undefined;
     const resolution = rawResolution ? parseInt(rawResolution, 10) || 0 : undefined;
     
-    const fcrRaw = (row[idxFCR] ?? "").trim().replace('%', '');
-    const fcr = fcrRaw ? parseFloat(fcrRaw) || 0 : 0;
-    
-    // Calculate overall score as average of Phone Etiquette, Problem Solving, Product Knowledge, FCR, Resolution
-    const scoredKpis = [phoneEtiquette, problemSolving, productKnowledge, fcr, resolution].filter(v => v !== undefined);
+    // Calculate overall score as average of Phone Etiquette, Problem Solving, Product Knowledge, Resolution
+    const scoredKpis = [phoneEtiquette, problemSolving, productKnowledge, resolution].filter(v => v !== undefined);
     const score = scoredKpis.length > 0 ? Math.round(scoredKpis.reduce((a, b) => a + b, 0) / scoredKpis.length) : 0;
     
     // Try to get overall rating if it exists
@@ -233,8 +228,6 @@ export const fetchAllDashboardData = async () => {
     // Get callId (phone number)
     const called = (row[idxCalled] ?? "").trim();
     
-    console.log(`[EVAL] ${agent.name}: FCR=${fcr}`);
-
     // Create evaluation object
     const evaluation: any = {
       id: called || `row-${rowNum}`,
@@ -255,9 +248,6 @@ export const fetchAllDashboardData = async () => {
         resolution: resolution,
       },
     };
-
-    // Add FCR if it exists
-    if (fcr > 0) evaluation.fcr = fcr;
 
     agent.evaluations.push(evaluation);
     console.log(`Added evaluation for ${agent.name}, total evaluations now: ${agent.evaluations.length}`);
@@ -330,7 +320,6 @@ export const fetchAllDashboardData = async () => {
     evaluationsCount: agentsMap[email].evaluations.length
   })));
 
-  // Debug: check first evaluation's fcr
   const firstAgent = Object.values(agentsMap)[0];
   if (firstAgent?.evaluations[0]) {
     console.log("First evaluation in final data:", firstAgent.evaluations[0]);

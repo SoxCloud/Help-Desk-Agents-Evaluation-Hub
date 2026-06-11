@@ -233,14 +233,6 @@ export const AgentDashboard: React.FC<Props> = ({
     0,
   );
 
-  // Calculate FCR (First Call Resolution) for this agent - from evaluations
-  const totalFCR = filteredEvaluations.reduce(
-    (sum, e) => sum + (e.fcr || 0),
-    0,
-  );
-  const avgFCR = filteredEvaluations.length > 0
-    ? Math.round(totalFCR / filteredEvaluations.length)
-    : 0;
 
   // Update goals with current values
   useEffect(() => {
@@ -385,7 +377,7 @@ export const AgentDashboard: React.FC<Props> = ({
   // Export function - CSV format
   const exportData = () => {
     const rows: string[][] = [
-      ['Date', 'Phone', 'CSAT', 'Product', 'Etiquette', 'Solving', 'Resolution', 'FCR', 'Evaluator', 'Comments']
+      ['Date', 'Phone', 'CSAT', 'Product', 'Etiquette', 'Solving', 'Resolution', 'Evaluator', 'Comments']
     ];
     
     filteredEvaluations.forEach(e => {
@@ -397,7 +389,6 @@ export const AgentDashboard: React.FC<Props> = ({
         e.kpis?.etiquette?.toString() || '',
         e.kpis?.solving?.toString() || '',
         e.kpis?.resolution?.toString() || '',
-        e.fcr?.toString() || '',
         e.evaluator || '',
         e.comments || ''
       ]);
@@ -552,13 +543,6 @@ export const AgentDashboard: React.FC<Props> = ({
                 sub="Answer Rate"
                 icon={<PhoneCall />}
                 color="from-emerald-500 to-green-500"
-              />
-              <PremiumStatCard
-                title="FCR Score"
-                value={`${avgFCR}%`}
-                sub="first call resolution"
-                icon={<CheckCircle />}
-                color="from-green-500 to-emerald-500"
               />
               <PremiumStatCard
                 title="Tickets"
@@ -791,11 +775,6 @@ export const AgentDashboard: React.FC<Props> = ({
                   label="Resolution"
                   value={avgKpis.resolution}
                   color="bg-emerald-500"
-                />
-                <ThickKPI
-                  label="FCR"
-                  value={avgFCR}
-                  color="bg-cyan-500"
                 />
               </div>
             </div>
@@ -1067,7 +1046,6 @@ export const AgentDashboard: React.FC<Props> = ({
                     <th className="px-3 py-3 text-center">CALLS</th>
                     <th className="px-3 py-3 text-center">ASR</th>
                     <th className="px-3 py-3 text-center">CSAT</th>
-                    <th className="px-3 py-3 text-center">FCR</th>
                     <th className="px-3 py-3 text-center">CHEESE</th>
                   </tr>
                 </thead>
@@ -1095,10 +1073,6 @@ export const AgentDashboard: React.FC<Props> = ({
                       const solved = filteredHistory.reduce((s, h) => s + (h.solvedTickets || 0), 0);
                       const debSales = filteredHistory.reduce((s, h) => s + (h.debonairsSales || 0), 0);
                       const cheeseSales = filteredHistory.reduce((s, h) => s + (h.cheeseSales || 0), 0);
-                      // Calculate average FCR from evaluations (only where FCR is scored)
-                      const fcrTotal = filteredEvals.reduce((s, e) => s + (e.fcr && e.fcr > 0 ? e.fcr : 0), 0);
-                      const fcrCount = filteredEvals.filter(e => e.fcr && e.fcr > 0).length;
-                      const agentFCR = fcrCount > 0 ? Math.round(fcrTotal / fcrCount) : 0;
                       const cheeseUpsell = debSales > cheeseSales ? ((cheeseSales / (debSales - cheeseSales)) * 100).toFixed(1) : "0";
                       const isMe = a.email.toLowerCase() === agent.email.toLowerCase();
                       
@@ -1128,9 +1102,6 @@ export const AgentDashboard: React.FC<Props> = ({
                           </td>
                           <td className="px-3 py-3 text-center font-black text-indigo-400">
                             {latestScore}%
-                          </td>
-                          <td className="px-3 py-3 text-center font-black text-cyan-400">
-                            {agentFCR}%
                           </td>
                           <td className="px-3 py-3 text-center font-black text-amber-400">
                             {cheeseUpsell}%
@@ -1174,9 +1145,6 @@ export const AgentDashboard: React.FC<Props> = ({
                       <KPIMini label="Etiquette" value={evalItem.kpis.etiquette} />
                       <KPIMini label="Solving" value={evalItem.kpis.solving} />
                       <KPIMini label="Resolution" value={evalItem.kpis.resolution} />
-                      {(evalItem.fcr !== undefined && evalItem.fcr > 0) ? (
-                        <KPIMini label="FCR" value={evalItem.fcr} />
-                      ) : null}
                     </div>
 
                     {/* Details & Comments */}

@@ -15,22 +15,20 @@ const AVAILABLE_MODELS = {
 
 const calculateAgentStats = (history: DailyStats[]) => {
   if (!history || history.length === 0) {
-    return { totalCalls: 0, totalTickets: 0, solvedTickets: 0, avgFCR: 0, avgResolution: 0 };
+    return { totalCalls: 0, totalTickets: 0, solvedTickets: 0, avgResolution: 0 };
   }
   
   const totals = history.reduce((acc, day) => ({
     calls: acc.calls + (day.answeredCalls || 0) + (day.abandonedCalls || 0),
     tickets: acc.tickets + (day.totalTickets || 0),
     solved: acc.solved + (day.solvedTickets || 0),
-    fcr: acc.fcr + (day.fcr || 0),
     resolutionTime: acc.resolutionTime + (day.avgResolutionSeconds || 0),
-  }), { calls: 0, tickets: 0, solved: 0, fcr: 0, resolutionTime: 0 });
+  }), { calls: 0, tickets: 0, solved: 0, resolutionTime: 0 });
 
   return {
     totalCalls: totals.calls,
     totalTickets: totals.tickets,
     solvedTickets: totals.solved,
-    avgFCR: history.length > 0 ? Math.round(totals.fcr / history.length) : 0,
     avgResolution: history.length > 0 ? Math.round(totals.resolutionTime / history.length) : 0,
   };
 };
@@ -56,7 +54,6 @@ Agent: ${agent.name}
 - Total Calls Handled: ${stats.totalCalls}
 - Total Tickets: ${stats.totalTickets}
 - Tickets Solved: ${stats.solvedTickets}
-- Average FCR (First Call Resolution): ${stats.avgFCR}%
 - Avg Resolution Time: ${stats.avgResolution} seconds
 
 📊 EVALUATION SCORES:
@@ -65,7 +62,6 @@ Agent: ${agent.name}
 - Phone Etiquette: ${latestEval.kpis?.etiquette || 0}/100
 - Problem Solving: ${latestEval.kpis?.solving || 0}/100
 - Resolution: ${latestEval.kpis?.resolution || 0}/100
-- FCR: ${latestEval.fcr || 0}%
 
 💬 Evaluator Feedback: "${latestEval.comments || latestEval.positivePoints || 'No comments'}"
 
@@ -160,7 +156,6 @@ export const generateTeamInsights = async (agents: Agent[]) => {
       totalCalls: 0,
       totalTickets: 0,
       totalSolved: 0,
-      totalFCR: 0,
       avgCSAT: 0,
       avgEtiquette: 0,
       avgProduct: 0,
@@ -177,13 +172,10 @@ export const generateTeamInsights = async (agents: Agent[]) => {
       const totalCalls = agent.history.reduce((s, h) => s + (h.answeredCalls || 0) + (h.abandonedCalls || 0), 0);
       const totalTickets = agent.history.reduce((s, h) => s + (h.totalTickets || 0), 0);
       const solvedTickets = agent.history.reduce((s, h) => s + (h.solvedTickets || 0), 0);
-      const totalFCR = agent.history.reduce((s, h) => s + (h.fcr || 0), 0);
-      const avgFCR = agent.history.length > 0 ? totalFCR / agent.history.length : 0;
 
       teamStats.totalCalls += totalCalls;
       teamStats.totalTickets += totalTickets;
       teamStats.totalSolved += solvedTickets;
-      teamStats.totalFCR += avgFCR;
 
       // Get latest evaluation
       if (agent.evaluations.length > 0) {
@@ -214,7 +206,6 @@ export const generateTeamInsights = async (agents: Agent[]) => {
       teamStats.avgSolving = Math.round(teamStats.avgSolving / evalCount);
       teamStats.avgResolution = Math.round(teamStats.avgResolution / evalCount);
     }
-    teamStats.totalFCR = agents.length > 0 ? Math.round(teamStats.totalFCR / agents.length) : 0;
 
     const prompt = `
 You are an expert Call Center Team Manager. Analyze this team's performance data and provide actionable insights:
@@ -224,7 +215,6 @@ You are an expert Call Center Team Manager. Analyze this team's performance data
 - Total Calls Handled: ${teamStats.totalCalls}
 - Total Tickets: ${teamStats.totalTickets}
 - Tickets Solved: ${teamStats.totalSolved}
-- Average Team FCR: ${teamStats.totalFCR}%
 - Average CSAT Score: ${teamStats.avgCSAT}%
 - Evaluations Analyzed: ${evalCount}
 
@@ -233,7 +223,6 @@ You are an expert Call Center Team Manager. Analyze this team's performance data
 - Product Knowledge: ${teamStats.avgProduct}%
 - Problem Solving: ${teamStats.avgSolving}%
 - Resolution: ${teamStats.avgResolution}%
-- FCR: ${teamStats.totalFCR}%
 
 🏆 TOP PERFORMER: ${teamStats.topPerformer.name} (${teamStats.topPerformer.score}%)
 ⚠️ NEEDS ATTENTION: ${teamStats.needsHelp.name} (${teamStats.needsHelp.score}%)

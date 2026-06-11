@@ -239,23 +239,6 @@ export const AdminDashboard: React.FC<Props> = ({
     0,
   );
 
-  // Calculate FCR (First Call Resolution) - average percentage across all agents
-  const totalFCR = agentsWithFilteredHistory.reduce(
-    (sum, a) =>
-      sum +
-      a.history.reduce((inner, h) => inner + (h.fcr || 0), 0),
-    0,
-  );
-  
-  const fcrSamples = agentsWithFilteredHistory.reduce(
-    (sum, a) => sum + a.history.length,
-    0,
-  );
-
-  const avgFCR = fcrSamples > 0
-    ? (totalFCR / fcrSamples).toFixed(1)
-    : "0";
-
   // CHART DATA - Ticket Performance
   const chartData = agentsWithFilteredHistory.map((a) => ({
     name: a.name.split(" ")[0],
@@ -275,12 +258,10 @@ export const AdminDashboard: React.FC<Props> = ({
     let totalEtiquette = 0;
     let totalSolving = 0;
     let totalResolution = 0;
-    let totalFCR = 0;
     let countProduct = 0;
     let countEtiquette = 0;
     let countSolving = 0;
     let countResolution = 0;
-    let countFCR = 0;
 
     agentsWithFilteredHistory.forEach(agent => {
       agent.evaluations.forEach(evalItem => {
@@ -300,10 +281,6 @@ export const AdminDashboard: React.FC<Props> = ({
           totalResolution += evalItem.kpis.resolution;
           countResolution++;
         }
-        if (evalItem.fcr !== undefined && evalItem.fcr > 0) {
-          totalFCR += evalItem.fcr;
-          countFCR++;
-        }
       });
     });
 
@@ -312,14 +289,13 @@ export const AdminDashboard: React.FC<Props> = ({
       etiquette: countEtiquette > 0 ? Math.round(totalEtiquette / countEtiquette) : undefined,
       solving: countSolving > 0 ? Math.round(totalSolving / countSolving) : undefined,
       resolution: countResolution > 0 ? Math.round(totalResolution / countResolution) : undefined,
-      fcr: countFCR > 0 ? Math.round(totalFCR / countFCR) : undefined,
       totalEvals: agentsWithFilteredHistory.reduce((sum, a) => sum + a.evaluations.length, 0),
     };
   }, [agentsWithFilteredHistory]);
 
   const activeAgents = agentsWithFilteredHistory.filter((a) => a.history.length > 0).length;
 
-  const [sortBy, setSortBy] = useState<'overall' | 'csat' | 'fcr' | 'tickets' | 'interactionRate' | 'answerRate' | 'cheeseUpsell'>('overall');
+  const [sortBy, setSortBy] = useState<'overall' | 'csat' | 'tickets' | 'interactionRate' | 'answerRate' | 'cheeseUpsell'>('overall');
 
   const performanceRankings = useMemo(() => {
     return agentsWithFilteredHistory
@@ -350,17 +326,11 @@ export const AdminDashboard: React.FC<Props> = ({
           ? Math.round(totalScore / agent.evaluations.length)
           : 0;
 
-        const totalFCR = agent.evaluations.reduce((sum, e) => sum + (e.fcr || 0), 0);
-        const avgFCR = agent.evaluations.length > 0
-          ? Math.round(totalFCR / agent.evaluations.length)
-          : 0;
-
         const overallScore = Math.round(
-          (avgCSAT * 0.30) +
-          (avgFCR * 0.25) +
+          (avgCSAT * 0.40) +
           (interactionRate >= 3 ? 20 : interactionRate * 6.67) +
-          (answerRate * 0.15) +
-          (cheeseUpsell * 0.15) +
+          (answerRate * 0.20) +
+          (cheeseUpsell * 0.20) +
           (totalTickets > 0 ? 10 : 0)
         );
 
@@ -369,7 +339,6 @@ export const AdminDashboard: React.FC<Props> = ({
           name: agent.name,
           avatar: agent.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2),
           csat: avgCSAT,
-          fcr: avgFCR,
           tickets: totalTickets,
           interactionRate: interactionRate,
           calls: answeredCalls,
@@ -381,7 +350,6 @@ export const AdminDashboard: React.FC<Props> = ({
       })
       .sort((a, b) => {
         if (sortBy === 'csat') return b.csat - a.csat;
-        if (sortBy === 'fcr') return b.fcr - a.fcr;
         if (sortBy === 'tickets') return b.tickets - a.tickets;
         if (sortBy === 'interactionRate') return b.interactionRate - a.interactionRate;
         if (sortBy === 'answerRate') return b.answerRate - a.answerRate;
@@ -391,11 +359,10 @@ export const AdminDashboard: React.FC<Props> = ({
   }, [agentsWithFilteredHistory, sortBy]);
 
   const exportToCSV = () => {
-    const headers = ['Rank', 'Agent', 'FCR%', 'CSAT%', 'INT/TKT', 'Tickets', 'ASR', 'Cheese%', 'Overall'];
+    const headers = ['Rank', 'Agent', 'CSAT%', 'INT/TKT', 'Tickets', 'ASR', 'Cheese%', 'Overall'];
     const rows = performanceRankings.map((agent, idx) => [
       idx + 1,
       agent.name,
-      agent.fcr,
       agent.csat,
       agent.interactionRate,
       agent.tickets,
@@ -514,15 +481,6 @@ export const AdminDashboard: React.FC<Props> = ({
             change="Per ticket"
             icon={<Clock className="text-sky-400" />}
             showPercentage={false}
-          />
-          
-          {/* Percentages - FCR from evaluations */}
-          <MetricCard
-            title="FCR"
-            value={kpiAverages.fcr}
-            change="First Call Resolution"
-            icon={<CheckCircle className="text-cyan-400" />}
-            showPercentage={true}
           />
           
           {/* Numbers */}
@@ -799,12 +757,6 @@ export const AdminDashboard: React.FC<Props> = ({
               icon={<CheckCircle className="text-emerald-400" size={18} />}
               color="from-emerald-500 to-emerald-600"
             />
-            <KPICard
-              label="FCR"
-              value={kpiAverages.fcr}
-              icon={<Zap className="text-cyan-400" size={18} />}
-              color="from-cyan-500 to-cyan-600"
-            />
           </div>
         </div>
 
@@ -833,8 +785,7 @@ export const AdminDashboard: React.FC<Props> = ({
                   <th className="px-3 py-3 text-left">AGENT</th>
                   <th className="px-3 py-3 text-center">TKTS</th>
                   <th className="px-3 py-3 text-center">INT/TKT</th>
-                  <th className="px-3 py-3 text-center">FCR%</th>
-                  <th className="px-3 py-3 text-center">ANS</th>
+                   <th className="px-3 py-3 text-center">ANS</th>
                   <th className="px-3 py-3 text-center">ABN</th>
                   <th className="px-3 py-3 text-center">ASR</th>
                   <th className="px-3 py-3 text-center">CHEESE</th>
@@ -876,15 +827,6 @@ export const AdminDashboard: React.FC<Props> = ({
                   const agentCheeseUpsell = agentBaseSales > 0
                     ? ((agentCheeseSales / agentBaseSales) * 100).toFixed(1)
                     : "0";
-                  
-                  // Calculate average FCR for this agent
-                  const agentFCR = agent.evaluations.reduce(
-                    (s, e) => s + (e.fcr || 0),
-                    0,
-                  );
-                  const agentFcrAvg = agent.evaluations.length > 0
-                    ? Math.round(agentFCR / agent.evaluations.length)
-                    : 0;
                   
                   // Calculate credits for this agent (as number, not percentage)
                   const agentCredits = agent.history.reduce(
@@ -936,9 +878,6 @@ export const AdminDashboard: React.FC<Props> = ({
                     </td>
                     <td className="px-3 py-3 text-center font-black text-cyan-400">
                       {agentAvgInteractions}
-                    </td>
-                    <td className="px-3 py-3 text-center font-black text-green-400">
-                      {agentFcrAvg}
                     </td>
                     <td className="px-3 py-3 text-center font-black text-blue-400">
                       {totalAnswered}
@@ -1006,10 +945,6 @@ export const AdminDashboard: React.FC<Props> = ({
                     <span className="text-white font-bold ml-1">{topPerformer.csat}%</span>
                   </div>
                   <div className="bg-slate-800/50 px-3 py-1.5 rounded-lg">
-                    <span className="text-slate-400 text-xs">FCR</span>
-                    <span className="text-white font-bold ml-1">{topPerformer.fcr}%</span>
-                  </div>
-                  <div className="bg-slate-800/50 px-3 py-1.5 rounded-lg">
                     <span className="text-slate-400 text-xs">Tickets</span>
                     <span className="text-white font-bold ml-1">{topPerformer.tickets}</span>
                   </div>
@@ -1039,7 +974,6 @@ export const AdminDashboard: React.FC<Props> = ({
               {[
                 { key: 'overall', label: 'Overall' },
                 { key: 'csat', label: 'CSAT' },
-                { key: 'fcr', label: 'FCR' },
                 { key: 'tickets', label: 'Tickets' },
                 { key: 'interactionRate', label: 'Int/Tkt' },
                 { key: 'answerRate', label: 'ASR' },
@@ -1075,7 +1009,6 @@ export const AdminDashboard: React.FC<Props> = ({
                 <tr className="text-[9px] uppercase tracking-wider text-slate-400">
                   <th className="px-4 py-3 text-left">Rank</th>
                   <th className="px-4 py-3 text-left">Agent</th>
-                  <th className="px-4 py-3 text-center">FCR%</th>
                   <th className="px-4 py-3 text-center">CSAT%</th>
                   <th className="px-4 py-3 text-center">INT/TKT</th>
                   <th className="px-4 py-3 text-center">Tickets</th>
@@ -1118,9 +1051,6 @@ export const AdminDashboard: React.FC<Props> = ({
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className="text-cyan-400 font-bold">{agent.fcr}%</span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
                       <span className="text-purple-400 font-bold">{agent.csat}%</span>
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -1156,40 +1086,7 @@ export const AdminDashboard: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* FCR vs CSAT Comparison Chart */}
-        <div className="bg-[#1e293b] border border-slate-800 p-6 rounded-2xl">
-          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-            <Activity className="text-indigo-400" size={18} /> FCR vs CSAT Comparison
-          </h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart 
-                data={performanceRankings.slice(0, 10)} 
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} domain={[0, 100]} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
-                  formatter={(value: number, name: string) => [`${value}%`, name === 'fcr' ? 'FCR' : 'CSAT']}
-                />
-                <Bar dataKey="fcr" fill="#06b6d4" radius={[4, 4, 0, 0]} name="fcr" />
-                <Bar dataKey="csat" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="csat" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex justify-center gap-6 mt-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
-              <span className="text-slate-400 text-xs">FCR%</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              <span className="text-slate-400 text-xs">CSAT%</span>
-            </div>
-          </div>
-        </div>
+
       </div>
 
       {/* AI Insights Panel */}
