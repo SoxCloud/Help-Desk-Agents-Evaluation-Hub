@@ -74,7 +74,7 @@ export const fetchAllDashboardData = async () => {
   const [agentsV1, dailyV1, evalV1] = await Promise.all([
     fetchTabCsv("AgentsV1"),
     fetchTabCsv("DailyStatsV1"),
-    fetchTabCsv("CallEvaluationsV1"),
+    fetchTabCsv("FormData"),
   ]);
 
   const agentsMap: Record<string, Agent> = {};
@@ -129,116 +129,77 @@ export const fetchAllDashboardData = async () => {
     if (name) nameToEmail[normalizeName(name)] = email;
   });
 
-  // 2) CallEvaluationsV1 - UPDATED MAPPING TO MATCH YOUR ACTUAL COLUMNS
+  // 2) FormData - Parsing form response sheet
   const evalHeaders = evalV1[0] ?? [];
   const eIdx = getColumnIndices(evalHeaders);
   
-  // Map your exact column names from the image
-  const idxEvalAgent = eIdx.findColumn(["agent"]);
-  const idxEvalEmail = eIdx.findColumn(["email"]);
-  const idxCalled = eIdx.findColumn(["callId", "CallId", "call id", "Call ID", "phone", "Phone", "number", "Number"]);
-  const idxEvalDate = eIdx.findColumn(["Date"]);   // Capital D in Date
-  const idxCallReceivedDate = eIdx.findColumn(["callReceivedDate", "CallReceivedDate", "callDate", "CallDate", "callReceived"]);
-  const idxEvaluator = eIdx.findColumn(["evaluator"]);
-  const idxCallType = eIdx.findColumn(["callType"]);
-  const idxDuration = eIdx.findColumn(["duration"]);
-  const idxPhoneEtiquette = eIdx.findColumn(["phoneEtiquetteScore"]);
-  const idxProblemSolving = eIdx.findColumn(["problemSolvingScore"]);
-  const idxProductKnowledge = eIdx.findColumn(["productKnowledgeScore"]);
-  const idxResolution = eIdx.findColumn(["Resolution outcome", "Resolution"]);
-  const idxComment = eIdx.findColumn(["evaluatorComment"]);
-  
-  // For overall rating - if not present, we'll calculate from the scores
-  const idxOverallRating = eIdx.findColumn(["overallRating", "overall rating", "rating"]);
+  const idxEvalDate = eIdx.findColumn(["Date"]);
+  const idxAgentName = eIdx.findColumn(["Column 1"]);
+  const idxFormEmail = eIdx.findColumn(["Email"]);
+  const idxCallType = eIdx.findColumn(["Call Type"]);
+  const idxCallerId = eIdx.findColumn(["caller ID"]);
+  const idxPhoneEtiquette = eIdx.findColumn(["Phone etiquette"]);
+  const idxProblemSolving = eIdx.findColumn(["Problem solving"]);
+  const idxProductKnowledge = eIdx.findColumn(["Product knowladge"]);
+  const idxResolution = eIdx.findColumn(["Overall was the customer fully assisted."]);
+  const idxEvaluatorEmail = eIdx.findColumn(["Email address"]);
+  const idxComment = eIdx.findColumn(["Evaluators comment"]);
 
-  console.log("Column indices found:", {
+  console.log("FormData column indices:", {
     headers: evalHeaders,
-    agent: idxEvalAgent,
-    email: idxEvalEmail,
-    callId: idxCalled,
     date: idxEvalDate,
-    evaluator: idxEvaluator,
+    agentName: idxAgentName,
+    email: idxEmail,
     callType: idxCallType,
-    duration: idxDuration,
+    callerId: idxCallerId,
     phoneEtiquette: idxPhoneEtiquette,
     problemSolving: idxProblemSolving,
     productKnowledge: idxProductKnowledge,
     resolution: idxResolution,
+    evaluatorEmail: idxEvaluatorEmail,
     comment: idxComment,
-    overallRating: idxOverallRating
   });
 
   let rowNum = 0;
   evalV1.slice(1).forEach((row) => {
     rowNum++;
-    
-    const agentName = (row[idxEvalAgent] ?? "").trim();
-    const emailRaw = (row[idxEvalEmail] ?? "").trim();
-    let email = "";
-    
-    if (emailRaw) {
-      email = emailRaw.toLowerCase();
-    } else if (agentName) {
-      email = nameToEmail[normalizeName(agentName)];
-    }
+
+    const emailRaw = (row[idxFormEmail] ?? "").trim();
+    let email = emailRaw ? emailRaw.toLowerCase() : "";
     
     if (!email) {
-      console.log("No email found for agent:", agentName);
-      return;
+      const agentName = (row[idxAgentName] ?? "").trim();
+      if (agentName) email = nameToEmail[normalizeName(agentName)];
     }
+
+    if (!email) return;
 
     const agent = agentsMap[email];
-    if (!agent) {
-      console.log("Agent not found in map for email:", email);
-      return;
-    }
+    if (!agent) return;
 
-    // Parse duration (value "20" means 20 seconds)
-    const durationStr = (row[idxDuration] ?? "").trim();
-    let durationSeconds = 0;
-    if (durationStr) {
-      durationSeconds = parseInt(durationStr, 10) || 0;
-    }
-    
-    // Parse scores - blank cells are undefined (N/A, not 0)
     const rawPhoneEtiquette = (row[idxPhoneEtiquette] ?? "").trim();
     const rawProblemSolving = (row[idxProblemSolving] ?? "").trim();
     const rawProductKnowledge = (row[idxProductKnowledge] ?? "").trim();
     const rawResolution = (row[idxResolution] ?? "").trim();
-    
-    const phoneEtiquette = rawPhoneEtiquette ? parseInt(rawPhoneEtiquette, 10) || 0 : undefined;
-    const problemSolving = rawProblemSolving ? parseInt(rawProblemSolving, 10) || 0 : undefined;
-    const productKnowledge = rawProductKnowledge ? parseInt(rawProductKnowledge, 10) || 0 : undefined;
-    const resolution = rawResolution ? parseInt(rawResolution, 10) || 0 : undefined;
-    
-    // Calculate overall score as average of Phone Etiquette, Problem Solving, Product Knowledge, Resolution
+
+    const phoneEtiquette = rawPhoneEtiquette && !isNaN(Number(rawPhoneEtiquette)) ? parseInt(rawPhoneEtiquette, 10) : undefined;
+    const problemSolving = rawProblemSolving && !isNaN(Number(rawProblemSolving)) ? parseInt(rawProblemSolving, 10) : undefined;
+    const productKnowledge = rawProductKnowledge && !isNaN(Number(rawProductKnowledge)) ? parseInt(rawProductKnowledge, 10) : undefined;
+    const resolution = rawResolution && !isNaN(Number(rawResolution)) ? parseInt(rawResolution, 10) : undefined;
+
     const scoredKpis = [phoneEtiquette, problemSolving, productKnowledge, resolution].filter(v => v !== undefined);
     const score = scoredKpis.length > 0 ? Math.round(scoredKpis.reduce((a, b) => a + b, 0) / scoredKpis.length) : 0;
-    
-    // Try to get overall rating if it exists
-    let overallRating: number | undefined;
-    if (idxOverallRating !== -1) {
-      const ratingRaw = (row[idxOverallRating] ?? "").trim();
-      overallRating = parseFloat(ratingRaw) || undefined;
-    }
-    
-    // Get comment (from your example: "Not acceptable you bil transferred the custom...")
+
     const comment = (row[idxComment] ?? "").trim();
-    
-    // Get callId (phone number)
-    const called = (row[idxCalled] ?? "").trim();
-    
-    // Create evaluation object
+    const callerId = (row[idxCallerId] ?? "").trim();
+    const evaluatorEmail = (row[idxEvaluatorEmail] ?? "").trim();
+
     const evaluation: any = {
-      id: called || `row-${rowNum}`,
+      id: callerId || `form-${rowNum}`,
       date: normalizeDate((row[idxEvalDate] ?? "").trim()),
-      callReceivedDate: normalizeDate((row[idxCallReceivedDate] ?? "").trim()),
-      evaluator: (row[idxEvaluator] ?? "").trim() || undefined,
-      called: called || undefined,
+      evaluator: evaluatorEmail || undefined,
+      called: callerId || undefined,
       callType: (row[idxCallType] ?? "").trim() || undefined,
-      duration: durationStr || undefined,
-      durationSeconds: durationSeconds || undefined,
-      overallRating: overallRating,
       score: score,
       comments: comment || undefined,
       kpis: {
@@ -250,7 +211,7 @@ export const fetchAllDashboardData = async () => {
     };
 
     agent.evaluations.push(evaluation);
-    console.log(`Added evaluation for ${agent.name}, total evaluations now: ${agent.evaluations.length}`);
+    console.log(`Added evaluation for ${agent.name} from FormData, total: ${agent.evaluations.length}`);
   });
 
   // 3) DailyStatsV1 (one row per agent per day)
