@@ -560,7 +560,7 @@ export const AgentDashboard: React.FC<Props> = ({
               />
               <PremiumStatCard
                 title="Avg Interactions"
-                value={totalTickets > 0 ? (interactions / totalTickets).toFixed(1) : "0"}
+                value={totalTickets > 0 ? Math.round(interactions / totalTickets) : "0"}
                 sub="per ticket"
                 icon={<Activity />}
                 color="from-cyan-500 to-teal-500"

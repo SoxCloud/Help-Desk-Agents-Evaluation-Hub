@@ -229,7 +229,7 @@ export const AdminDashboard: React.FC<Props> = ({
   );
 
   const avgInteractionsPerTicket = totalTicketsForInteractions > 0
-    ? (totalInteractions / totalTicketsForInteractions).toFixed(1)
+    ? Math.round(totalInteractions / totalTicketsForInteractions)
     : "0";
 
   // Total transactions
@@ -311,7 +311,7 @@ export const AdminDashboard: React.FC<Props> = ({
         
         const interactions = agent.history.reduce((sum, h) => sum + (h.interactions || 0), 0);
         const interactionRate = totalTickets > 0
-          ? parseFloat((interactions / totalTickets).toFixed(1))
+          ? Math.round(interactions / totalTickets)
           : 0;
         
         const debonairsSales = agent.history.reduce((sum, h) => sum + (h.debonairsSales || 0), 0);
@@ -852,7 +852,7 @@ export const AdminDashboard: React.FC<Props> = ({
                     0,
                   );
                   const agentAvgInteractions = totalTickets > 0
-                    ? (agentTotalInteractions / totalTickets).toFixed(1)
+                    ? Math.round(agentTotalInteractions / totalTickets)
                     : "0";
 
                   return (
